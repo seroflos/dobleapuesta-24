@@ -308,7 +308,7 @@ var saving=false;
 async function loadAll(){
   var el=document.getElementById('saveStatus');
   if(el)el.textContent='Cargando...';
-  // Always load local first for instant render
+  // Load local first for instant render
   try{var r=localStorage.getItem('msad_s');if(r){var s=JSON.parse(r);if(s.date===TODAY){state=s;TARDE=s.tarde||false;}else{history[s.date]=calcS(s);}}}catch(e){}
   try{var h=localStorage.getItem('msad_h');if(h)history=JSON.parse(h);}catch(e){}
   if(!state)state=makeState();
@@ -317,16 +317,16 @@ async function loadAll(){
   if(btnT)btnT.classList.toggle('on',TARDE);
   renderAll(true);
   updateRitualButtons();
-  // Then sync from Sheets in background
+  // Sync from Sheets in background
   try{
     var resE=await fetch(API+'?action=getEstado&key='+KEY);
     var dE=await resE.json();
     if(dE.data){
       var remote=JSON.parse(dE.data);
-      if(remote.date===TODAY){
+      if(remote&&remote.date===TODAY){
         state=remote;TARDE=state.tarde||false;
         if(btnT)btnT.classList.toggle('on',TARDE);
-      } else if(remote.date){
+      } else if(remote&&remote.date){
         history[remote.date]=calcS(remote);
       }
     }
@@ -345,35 +345,41 @@ async function loadAll(){
   updateRitualButtons();
   if(!state.dayStarted){setTimeout(openStartModal,400);}
 }
+
 async function save(){
   state.tarde=TARDE;state.date=TODAY;
   var snap=calcS(state);history[TODAY]=snap;
-  // Save locally first (instant, works offline)
+  // Save locally first
   try{localStorage.setItem('msad_s',JSON.stringify(state));localStorage.setItem('msad_h',JSON.stringify(history));}catch(e){}
   var el=document.getElementById('saveStatus');
   if(saving)return;saving=true;
   try{
-    // Save estado
-    await fetch(API,{method:'POST',body:JSON.stringify({
-      action:'saveEstado',key:KEY,
-      fecha:TODAY,tarde:TARDE,dayStarted:state.dayStarted,daySlept:state.daySlept,
-      bloques:state.bloques
-    })});
-    // Save historial entry
     var c=snap.c||{};
-    await fetch(API,{method:'POST',body:JSON.stringify({
-      action:'saveHistorial',key:KEY,
-      fecha:TODAY,done:snap.done,total:snap.total,pct:snap.pct,
-      c:{
-        workout: c.workout?c.workout.pct:0,
-        dieta:   c.dieta?c.dieta.pct:0,
-        proyecto:c.proyecto?c.proyecto.pct:0,
-        estudio: c.estudio?c.estudio.pct:0,
-        salud_m: c.salud_m?c.salud_m.pct:0,
-        rutina:  c.rutina?c.rutina.pct:0,
-        sueno:   c.sueno?c.sueno.pct:0
-      }
-    })});
+    var bloquesEnc=encodeURIComponent(JSON.stringify(state.bloques));
+    // Save estado via GET
+    await fetch(API
+      +'?action=saveEstado&key='+KEY
+      +'&fecha='+TODAY
+      +'&tarde='+TARDE
+      +'&dayStarted='+(state.dayStarted||false)
+      +'&daySlept='+(state.daySlept||false)
+      +'&bloques='+bloquesEnc
+    );
+    // Save historial via GET
+    await fetch(API
+      +'?action=saveHistorial&key='+KEY
+      +'&fecha='+TODAY
+      +'&done='+snap.done
+      +'&total='+snap.total
+      +'&pct='+snap.pct
+      +'&c_workout='+(c.workout?c.workout.pct:0)
+      +'&c_dieta='+(c.dieta?c.dieta.pct:0)
+      +'&c_proyecto='+(c.proyecto?c.proyecto.pct:0)
+      +'&c_estudio='+(c.estudio?c.estudio.pct:0)
+      +'&c_salud_m='+(c.salud_m?c.salud_m.pct:0)
+      +'&c_rutina='+(c.rutina?c.rutina.pct:0)
+      +'&c_sueno='+(c.sueno?c.sueno.pct:0)
+    );
     if(el)el.textContent='✓ guardado';
     setTimeout(function(){if(el)el.textContent='Solo por hoy'},1500);
   }catch(err){
