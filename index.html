@@ -301,8 +301,9 @@ function closeSleepModal(){
   updateRitualButtons();
 }
 
-var API='https://script.google.com/macros/s/AKfycbwmQ-7KOIP5J95xiwEJUlk0Hh-gXLInyRIOsDu06uLkypkoS64AcywTifjCXCr61PCU/exec';
-var KEY='soloporhoy';
+var SUPA_URL='https://jmolgcpvrfdcpcsbdctk.supabase.co';
+var SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imptb2xnY3B2cmZkY3Bjc2JkY3RrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3OTEwOTAsImV4cCI6MjA4OTM2NzA5MH0.EMJrnKNVDznJZWTcDXuLElYA5fPgzVYrkmmjdLimb9E';
+var HEADERS={'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY};
 var saving=false;
 
 async function loadAll(){
@@ -317,23 +318,34 @@ async function loadAll(){
   if(btnT)btnT.classList.toggle('on',TARDE);
   renderAll(true);
   updateRitualButtons();
-  // Sync from Sheets in background
+  // Sync from Supabase
   try{
-    var resE=await fetch(API+'?action=getEstado&key='+KEY);
+    // Get estado
+    var resE=await fetch(SUPA_URL+'/rest/v1/estado?fecha=eq.'+TODAY+'&limit=1',{headers:HEADERS});
     var dE=await resE.json();
-    if(dE.data){
-      var remote=JSON.parse(dE.data);
-      if(remote&&remote.date===TODAY){
-        state=remote;TARDE=state.tarde||false;
-        if(btnT)btnT.classList.toggle('on',TARDE);
-      } else if(remote&&remote.date){
-        history[remote.date]=calcS(remote);
-      }
+    if(dE&&dE.length>0){
+      var remote=JSON.parse(dE[0].bloques);
+      remote.date=dE[0].fecha;
+      remote.tarde=dE[0].tarde;
+      remote.dayStarted=dE[0].day_started;
+      remote.daySlept=dE[0].day_slept;
+      state=remote;TARDE=state.tarde||false;
+      if(btnT)btnT.classList.toggle('on',TARDE);
     }
-    var resH=await fetch(API+'?action=getHistorial&key='+KEY);
+    // Get historial
+    var resH=await fetch(SUPA_URL+'/rest/v1/historial?order=fecha.desc&limit=60',{headers:HEADERS});
     var dH=await resH.json();
-    if(dH.data){
-      Object.keys(dH.data).forEach(function(k){history[k]=dH.data[k]});
+    if(dH&&dH.length>0){
+      dH.forEach(function(row){
+        history[row.fecha]={
+          done:row.done,total:row.total,pct:row.pct,
+          c:{
+            workout:{pct:row.c_workout},dieta:{pct:row.c_dieta},
+            proyecto:{pct:row.c_proyecto},estudio:{pct:row.c_estudio},
+            salud_m:{pct:row.c_salud_m},rutina:{pct:row.c_rutina},sueno:{pct:row.c_sueno}
+          }
+        };
+      });
     }
     if(el)el.textContent='✓ sincronizado';
     setTimeout(function(){if(el)el.textContent='Solo por hoy'},2000);
@@ -355,31 +367,36 @@ async function save(){
   if(saving)return;saving=true;
   try{
     var c=snap.c||{};
-    var bloquesEnc=encodeURIComponent(JSON.stringify(state.bloques));
-    // Save estado via GET
-    await fetch(API
-      +'?action=saveEstado&key='+KEY
-      +'&fecha='+TODAY
-      +'&tarde='+TARDE
-      +'&dayStarted='+(state.dayStarted||false)
-      +'&daySlept='+(state.daySlept||false)
-      +'&bloques='+bloquesEnc
-    );
-    // Save historial via GET
-    await fetch(API
-      +'?action=saveHistorial&key='+KEY
-      +'&fecha='+TODAY
-      +'&done='+snap.done
-      +'&total='+snap.total
-      +'&pct='+snap.pct
-      +'&c_workout='+(c.workout?c.workout.pct:0)
-      +'&c_dieta='+(c.dieta?c.dieta.pct:0)
-      +'&c_proyecto='+(c.proyecto?c.proyecto.pct:0)
-      +'&c_estudio='+(c.estudio?c.estudio.pct:0)
-      +'&c_salud_m='+(c.salud_m?c.salud_m.pct:0)
-      +'&c_rutina='+(c.rutina?c.rutina.pct:0)
-      +'&c_sueno='+(c.sueno?c.sueno.pct:0)
-    );
+    // Upsert estado
+    await fetch(SUPA_URL+'/rest/v1/estado',{
+      method:'POST',
+      headers:Object.assign({},HEADERS,{'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify({
+        fecha:TODAY,
+        tarde:TARDE,
+        day_started:state.dayStarted||false,
+        day_slept:state.daySlept||false,
+        bloques:JSON.stringify(state.bloques),
+        updated_at:new Date().toISOString()
+      })
+    });
+    // Upsert historial
+    await fetch(SUPA_URL+'/rest/v1/historial',{
+      method:'POST',
+      headers:Object.assign({},HEADERS,{'Prefer':'resolution=merge-duplicates'}),
+      body:JSON.stringify({
+        fecha:TODAY,
+        done:snap.done,total:snap.total,pct:snap.pct,
+        c_workout:c.workout?c.workout.pct:0,
+        c_dieta:c.dieta?c.dieta.pct:0,
+        c_proyecto:c.proyecto?c.proyecto.pct:0,
+        c_estudio:c.estudio?c.estudio.pct:0,
+        c_salud_m:c.salud_m?c.salud_m.pct:0,
+        c_rutina:c.rutina?c.rutina.pct:0,
+        c_sueno:c.sueno?c.sueno.pct:0,
+        updated_at:new Date().toISOString()
+      })
+    });
     if(el)el.textContent='✓ guardado';
     setTimeout(function(){if(el)el.textContent='Solo por hoy'},1500);
   }catch(err){
