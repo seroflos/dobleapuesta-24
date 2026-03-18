@@ -119,6 +119,39 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
 </style>
 </head>
 <body>
+<!-- MODAL INICIO DE DÍA -->
+<div id="startModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.60);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg);border-radius:var(--rad2);padding:28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.2)">
+    <div style="font-size:38px;margin-bottom:10px">☀️</div>
+    <div style="font-size:11px;font-weight:700;color:#38BDF8;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">Doble Apuesta</div>
+    <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:4px">Buenos días, Sergio</div>
+    <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;font-style:italic" id="startFecha"></div>
+    <div style="font-size:12px;color:#38BDF8;margin-bottom:20px;line-height:1.9;font-weight:500">
+      Solo por hoy.<br>Un bloque a la vez.<br>Tú puedes con esto.
+    </div>
+    <div style="background:var(--bg2);border-radius:var(--rad);padding:14px;margin-bottom:20px;text-align:left">
+      <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Tu día empieza con</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0"></div><span style="font-size:12px;color:var(--txt)">Bloque 1 — Despertar y Preparación</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0"></div><span style="font-size:12px;color:var(--txt2)">6:00 → Despertar · baño · dientes</span></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><div style="width:8px;height:8px;border-radius:50%;background:#639922;flex-shrink:0"></div><span style="font-size:12px;color:var(--txt2)">7:00 → Workout</span></div>
+      <div style="display:flex;align-items:center;gap:8px"><div style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0"></div><span style="font-size:12px;color:var(--txt2)">8:00 → Ducha · lonche · jugo verde</span></div>
+    </div>
+    <button onclick="startDay()" style="width:100%;font-size:14px;padding:14px;border-radius:var(--rad);border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:700;touch-action:manipulation">☀️ Activar Mi Salud al Día</button>
+    <button onclick="closeStartModal()" style="margin-top:10px;width:100%;font-size:12px;padding:10px;border-radius:var(--rad);border:1px solid var(--brd2);background:none;color:var(--txt3);cursor:pointer;font-family:inherit;touch-action:manipulation">Ya lo vi, entrar directo</button>
+  </div>
+</div>
+<!-- MODAL CIERRE DE DÍA -->
+<div id="sleepModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg);border-radius:var(--rad2);padding:28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.2)">
+    <div style="font-size:36px;margin-bottom:10px">🌙</div>
+    <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:4px">¡Buen trabajo hoy, Sergio!</div>
+    <div style="font-size:12px;color:var(--txt2);margin-bottom:20px;font-style:italic">Solo por hoy — lo lograste.</div>
+    <div id="sleepStats" style="background:var(--bg2);border-radius:var(--rad);padding:14px;margin-bottom:20px"></div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:18px;line-height:1.6">El día quedó guardado en tu historial.<br>Mañana empieza fresco a las 6:00.</div>
+    <button onclick="closeSleepModal()" style="width:100%;font-size:13px;padding:12px;border-radius:var(--rad);border:none;background:#888780;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;touch-action:manipulation">Cerrar · Buenas noches 🌙</button>
+  </div>
+</div>
+<!-- APP -->
 <div class="shell">
   <div class="topbar">
     <div>
@@ -128,67 +161,18 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div class="t-sub" id="saveStatus">Solo por hoy</div>
     </div>
     <div class="topbtns">
-      <button class="tbtn" style="--ac:#7F77DD" id="btnTarde" data-action="toggleTarde">🌆 Tarde</button>
-      <button class="tbtn" style="--ac:#1D9E75" id="btnFoco" data-action="toggleFoco">🎯 Enfoque</button>
-      <button id="btnStart" data-action="openStart" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #639922;background:#63992218;color:#639922;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none">☀️ Empezar día</button>
-      <button id="btnSleep" data-action="openSleep" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #888780;background:#88878018;color:#888780;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none">🌙 Ya me voy</button>
-    </div>
-  </div>
-  <!-- MODAL INICIO DE DÍA -->
-  <div id="startModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.60);z-index:200;align-items:center;justify-content:center;padding:20px">
-    <div style="background:var(--bg);border-radius:var(--rad2);padding:28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.2)">
-      <div style="font-size:38px;margin-bottom:10px">☀️</div>
-      <div style="font-size:11px;font-weight:700;color:#38BDF8;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">Doble Apuesta</div>
-      <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:4px">Buenos días, Sergio</div>
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;font-style:italic" id="startFecha"></div>
-      <div style="font-size:12px;color:#38BDF8;margin-bottom:20px;line-height:1.9;font-weight:500">
-        Solo por hoy.<br>Un bloque a la vez.<br>Tú puedes con esto.
-      </div>
-      <div style="background:var(--bg2);border-radius:var(--rad);padding:14px;margin-bottom:20px;text-align:left">
-        <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Tu día empieza con</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0"></div>
-          <span style="font-size:12px;color:var(--txt)">Bloque 1 — Despertar y Preparación</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0"></div>
-          <span style="font-size:12px;color:var(--txt2)">6:00 → Despertar · baño · dientes</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#639922;flex-shrink:0"></div>
-          <span style="font-size:12px;color:var(--txt2)">7:00 → Workout</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:8px;height:8px;border-radius:50%;background:#EF9F27;flex-shrink:0"></div>
-          <span style="font-size:12px;color:var(--txt2)">8:00 → Ducha · lonche · jugo verde</span>
-        </div>
-      </div>
-      <button data-action="startDay" style="width:100%;font-size:14px;padding:12px;border-radius:var(--rad);border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:.01em">
-        ☀️ Activar Mi Salud al Día
-      </button>
-      <button data-action="closeStart" style="margin-top:10px;width:100%;font-size:11px;padding:7px;border-radius:var(--rad);border:0.5px solid var(--brd2);background:none;color:var(--txt3);cursor:pointer;font-family:inherit">
-        Ya lo vi, entrar directo
-      </button>
-    </div>
-  </div>
-
-  <!-- MODAL CIERRE DE DÍA -->
-  <div id="sleepModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:20px">
-    <div style="background:var(--bg);border-radius:var(--rad2);padding:28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.2)">
-      <div style="font-size:36px;margin-bottom:10px">🌙</div>
-      <div style="font-size:18px;font-weight:700;color:var(--txt);margin-bottom:4px">¡Buen trabajo hoy, Sergio!</div>
-      <div style="font-size:12px;color:var(--txt2);margin-bottom:20px;font-style:italic">Solo por hoy — lo lograste.</div>
-      <div id="sleepStats" style="background:var(--bg2);border-radius:var(--rad);padding:14px;margin-bottom:20px"></div>
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:18px;line-height:1.6">El día quedó guardado en tu historial.<br>Mañana empieza fresco a las 6:00.</div>
-      <button data-action="closeSleep" style="width:100%;font-size:13px;padding:10px;border-radius:var(--rad);border:none;background:#888780;color:#fff;cursor:pointer;font-family:inherit;font-weight:600">Cerrar · Buenas noches 🌙</button>
+      <button class="tbtn" style="--ac:#7F77DD" id="btnTarde" onclick="toggleTarde()">🌆 Tarde</button>
+      <button class="tbtn" style="--ac:#1D9E75" id="btnFoco" onclick="toggleFoco()">🎯 Enfoque</button>
+      <button id="btnStart" onclick="openStartModal()" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #639922;background:#63992218;color:#639922;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none;touch-action:manipulation">☀️ Empezar día</button>
+      <button id="btnSleep" onclick="openSleepModal()" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #888780;background:#88878018;color:#888780;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none;touch-action:manipulation">🌙 Ya me voy</button>
     </div>
   </div>
   <div class="content">
     <div class="tabs">
-      <div class="tab on" id="tab0" data-action="tab" data-idx="0">Hoy</div>
-      <div class="tab" id="tab1" data-action="tab" data-idx="1">Horario</div>
-      <div class="tab" id="tab2" data-action="tab" data-idx="2">Historial</div>
-      <div class="tab" id="tab3" data-action="tab" data-idx="3">Gráfica</div>
+      <button class="tab on" id="tab0" onclick="setTab(0)" style="border:none;font-family:inherit;touch-action:manipulation">Hoy</button>
+      <button class="tab" id="tab1" onclick="setTab(1)" style="border:none;font-family:inherit;touch-action:manipulation">Horario</button>
+      <button class="tab" id="tab2" onclick="setTab(2)" style="border:none;font-family:inherit;touch-action:manipulation">Historial</button>
+      <button class="tab" id="tab3" onclick="setTab(3)" style="border:none;font-family:inherit;touch-action:manipulation">Gráfica</button>
     </div>
     <div class="progbar" id="progbar"></div>
     <div id="v0"></div>
@@ -217,7 +201,7 @@ var CATS=[
   {id:'sueno',    name:'Sueño',              color:'#888780',tids:['t12','t13']},
 ];
 
-function makeState(){return{date:TODAY,tarde:false,dayStarted:false,daySlept:false,bloques:[
+function makeState(){userInteracted=false;return{date:TODAY,tarde:false,dayStarted:false,daySlept:false,bloques:[
   {id:'b1',num:1,color:'#EF9F27',bg:'#FAEEDA',nombre:'Despertar y Preparación',horaN:'6:00–8:30',horaT:'6:00–8:30',
    sched:[{i:'6:00',f:'6:30',m:30,a:'Despertar · baño · dientes · vestirse'},{i:'6:30',f:'7:00',m:30,a:'Correr / meditación / conversación con Dios'},{i:'7:00',f:'8:00',m:60,a:'Workout — fuerza / acondicionamiento'},{i:'8:00',f:'8:30',m:30,a:'Ducha · revisar lonche y jugo verde'}],
    tareas:[
@@ -423,7 +407,7 @@ async function save(){
 }
 
 
-function setTab(n){curTab=n;for(var i=0;i<4;i++){document.getElementById('tab'+i).className='tab'+(n===i?' on':'');document.getElementById('v'+i).style.display=n===i?'block':'none';}if(n===0)renderHoy();else if(n===1)renderHorario();else if(n===2)renderHistorial();else if(n===3)renderChart();}
+function setTab(n){curTab=n;for(var i=0;i<4;i++){var tb=document.getElementById('tab'+i);tb.className='tab'+(n===i?' on':'');document.getElementById('v'+i).style.display=n===i?'block':'none';}if(n===0)renderHoy();else if(n===1)renderHorario();else if(n===2)renderHistorial();else if(n===3)renderChart();}
 function toggleTarde(){TARDE=!TARDE;state.tarde=TARDE;document.getElementById('btnTarde').classList.toggle('on',TARDE);renderAll();save()}
 function toggleFoco(){FOCO=!FOCO;efIdx=0;document.getElementById('btnFoco').classList.toggle('on',FOCO);if(FOCO&&curTab!==0)setTab(0);else renderHoy()}
 function toggleBlq(id){openB[id]=!openB[id];renderHoy();setTimeout(setupDrag,0)}
@@ -470,7 +454,9 @@ function renderHoy(){
   if(FOCO){
     var p=getPend();
     if(!p.length){
-      h+='<div class="ef-box"><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Modo Enfoque</div><div style="font-size:17px;font-weight:700;color:#639922;margin-bottom:12px">Dia completado!</div><button data-action="closeFoco" style="font-size:12px;padding:10px 20px;border-radius:20px;border:0.5px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:44px">Cerrar</button></div>';
+      h+='<div class="ef-box"><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Modo Enfoque</div>';
+      h+='<div style="font-size:17px;font-weight:700;color:#639922;margin-bottom:12px">Dia completado!</div>';
+      h+='<button onclick="FOCO=false;document.getElementById(\'btnFoco\').classList.remove(\'on\');renderHoy()" style="font-size:12px;padding:12px 24px;border-radius:20px;border:1px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:48px;touch-action:manipulation">Cerrar</button></div>';
     } else {
       if(efIdx>=p.length)efIdx=0;var item=p[efIdx];
       h+='<div class="ef-box" style="border-color:'+item.bl.color+'55">';
@@ -479,10 +465,10 @@ function renderHoy(){
       h+='<div style="font-size:16px;font-weight:500;color:var(--txt);line-height:1.4;margin-bottom:'+(item.tk.hora?'4px':'14px')+'">'+item.tk.txt+'</div>';
       if(item.tk.hora)h+='<div style="font-size:10px;color:var(--txt2);margin-bottom:14px">'+item.tk.hora+'</div>';
       h+='<div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">';
-      h+='<button data-action="efHecho" style="font-size:13px;padding:12px 22px;border-radius:20px;border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;min-height:48px">Hecho</button>';
-      h+='<button data-action="efSig" style="font-size:13px;padding:12px 20px;border-radius:20px;border:0.5px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:48px">Saltar</button>';
+      h+='<button onclick="efHecho()" style="font-size:14px;padding:14px 24px;border-radius:20px;border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;min-height:52px;touch-action:manipulation">✓ Hecho</button>';
+      h+='<button onclick="efSig()" style="font-size:14px;padding:14px 20px;border-radius:20px;border:1px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:52px;touch-action:manipulation">→ Saltar</button>';
       h+='</div>';
-      h+='<button data-action="closeFoco" style="font-size:11px;padding:8px 14px;border-radius:20px;border:0.5px solid var(--brd);background:none;color:var(--txt3);cursor:pointer;font-family:inherit;min-height:36px">Cerrar modo enfoque</button>';
+      h+='<button onclick="FOCO=false;document.getElementById(\'btnFoco\').classList.remove(\'on\');renderHoy()" style="font-size:11px;padding:10px 16px;border-radius:20px;border:1px solid var(--brd);background:none;color:var(--txt3);cursor:pointer;font-family:inherit;min-height:40px;touch-action:manipulation">Cerrar modo enfoque</button>';
       h+='</div>';
     }
   }
@@ -490,10 +476,13 @@ function renderHoy(){
     var bl=orden[i];var bc=bl.color;
     var bDone=bl.tareas.filter(function(t){return t.done}).length;
     var isO=openB[bl.id];
-    h+='<div class="blq" style="border-color:'+bc+'44">';
-    h+='<button class="blq-hdr" data-action="toggleBlq" data-bid="'+bl.id+'" style="background:'+bl.bg+'30;width:100%;border:none;text-align:left;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;padding:9px 13px;min-height:52px">';
-    h+='<div class="blq-l"><div class="blq-num" style="background:'+bc+'">'+bl.num+'</div><div><div class="blq-name">'+bl.nombre+'</div><div class="blq-hora">'+getHora(bl)+'</div></div></div>';
-    h+='<div class="blq-r"><span class="blq-pr">'+bDone+'/'+bl.tareas.length+'</span><span class="chev'+(isO?' op':'')+'">▾</span></div>';
+    h+='<div class="blq" data-bid="'+bl.id+'" style="border-color:'+bc+'44">';
+    // Block header — button element, works on iOS
+    h+='<button onclick="toggleBlq(\''+bl.id+'\')" style="width:100%;background:'+bl.bg+'30;border:none;border-bottom:0.5px solid '+bc+'22;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;font-family:inherit;min-height:52px;touch-action:manipulation;-webkit-tap-highlight-color:transparent">';
+    h+='<div style="display:flex;align-items:center;gap:9px">';
+    h+='<div class="blq-num" style="background:'+bc+'">'+bl.num+'</div>';
+    h+='<div><div class="blq-name">'+bl.nombre+'</div><div class="blq-hora">'+getHora(bl)+'</div></div></div>';
+    h+='<div style="display:flex;align-items:center;gap:6px"><span class="blq-pr">'+bDone+'/'+bl.tareas.length+'</span><span class="chev'+(isO?' op':'')+'">▾</span></div>';
     h+='</button>';
     h+='<div class="blq-body'+(isO?' op':'')+'">';
     h+='<div style="padding:2px 0">';
@@ -505,45 +494,52 @@ function renderHoy(){
       var isHE=(editHoraTid===tk.id);
       h+='<div class="tk'+(tk.done?' done':'')+'" data-tid="'+tk.id+'" data-bid="'+bl.id+'" style="--bc:'+bc+'">';
       h+='<div class="dh"><div class="dl"></div><div class="dl"></div><div class="dl"></div></div>';
-      h+='<button class="chk'+(tk.done?' on':'')+'" data-action="toggleTask" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="border-color:'+bc+';background:'+(tk.done?bc:'transparent')+';min-width:22px;min-height:22px">'+(tk.done?'<span style="color:#fff;font-size:11px;pointer-events:none">&#10003;</span>':'')+'</button>';
+      // Checkbox — button with explicit style, no CSS variables
+      h+='<button onclick="toggleTask(\''+bl.id+'\',\''+tk.id+'\')" style="width:22px;height:22px;min-width:22px;border-radius:5px;border:2px solid '+bc+';background:'+(tk.done?bc:'transparent')+';cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;padding:0">'+(tk.done?'<span style="color:#fff;font-size:12px;line-height:1">✓</span>':'')+'</button>';
       h+='<div class="tk-content">';
       if(isE){
-        h+='<input class="tk-edit" id="ei_'+tk.id+'" value="'+tk.txt.replace(/"/g,'\"').replace(/'/g,"&#39;")+'" style="border-color:'+bc+'" onblur="commitEdit(\''+bl.id+'\',\''+tk.id+'\')" onkeydown="ek(event,\''+bl.id+'\',\''+tk.id+'\')">';
-        h+='<div style="font-size:9px;color:var(--txt3);margin-top:2px">Enter para guardar</div>';
+        h+='<input class="tk-edit" id="ei_'+tk.id+'" value="'+tk.txt.replace(/"/g,'&quot;').replace(/'/g,'&#39;')+'" style="border-color:'+bc+'" onblur="commitEdit(\''+bl.id+'\',\''+tk.id+'\')" onkeydown="ek(event,\''+bl.id+'\',\''+tk.id+'\')">';
+        h+='<div style="font-size:9px;color:var(--txt3);margin-top:2px">Enter para guardar · Esc para cancelar</div>';
       } else {
-        h+='<div class="tk-main">';
+        h+='<div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">';
         h+='<div class="tk-txt" ondblclick="startEdit(\''+bl.id+'\',\''+tk.id+'\')" ontouchend="handleTap(\''+bl.id+'\',\''+tk.id+'\',event)">'+tk.txt+(tk.opt?'<span class="tk-opt" style="color:'+bc+';background:'+bc+'18">opcional</span>':'')+'</div>';
-        h+='<button class="sub-tog" data-action="toggleExp" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="'+(tk.exp?'border-color:'+bc+';color:'+bc:'')+'">'+(sT>0?(sD+'/'+sT+' sub'):'+ sub')+'</button>';
+        h+='<button onclick="toggleExp(\''+bl.id+'\',\''+tk.id+'\',event)" style="font-size:9px;padding:3px 8px;border-radius:6px;border:1px solid var(--brd2);background:none;color:'+(tk.exp?bc:'var(--txt3)')+';cursor:pointer;font-family:inherit;touch-action:manipulation;white-space:nowrap">'+(sT>0?(sD+'/'+sT+' sub'):'+ sub')+'</button>';
         h+='</div>';
-        h+='<div class="tk-hora-wrap">';
+        h+='<div style="display:flex;align-items:center;gap:4px;margin-top:2px">';
         if(isHE){
           h+='<input class="tk-hora-inp" id="hi_'+tk.id+'" value="'+(tk.hora||'')+'" placeholder="ej. 9:00-10:30" style="border-color:'+bc+'" onblur="commitHora(\''+bl.id+'\',\''+tk.id+'\')" onkeydown="hk2(event,\''+bl.id+'\',\''+tk.id+'\')">';
         } else if(tk.hora){
-          h+='<button class="tk-hora" data-action="editHora" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="color:'+bc+';background:'+bc+'18;border:0.5px solid '+bc+'44">'+tk.hora+' ✎</button>';
+          h+='<button onclick="startEditHora(\''+bl.id+'\',\''+tk.id+'\',event)" style="font-size:9px;color:'+bc+';background:'+bc+'18;border:1px solid '+bc+'44;padding:2px 8px;border-radius:6px;cursor:pointer;font-family:inherit;touch-action:manipulation;white-space:nowrap">'+tk.hora+' ✎</button>';
         } else {
-          h+='<button class="tk-hora-add" data-action="editHora" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="opacity:.65">+ hora</button>';
+          h+='<button onclick="startEditHora(\''+bl.id+'\',\''+tk.id+'\',event)" style="font-size:9px;color:var(--txt3);border:1px dashed var(--brd2);background:none;padding:2px 8px;border-radius:6px;cursor:pointer;font-family:inherit;touch-action:manipulation">+ hora</button>';
         }
         h+='</div>';
       }
       h+='</div>';
-      h+='<button data-action="delTask" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="opacity:.45;background:none;border:none;font-size:18px;color:var(--txt3);cursor:pointer;padding:4px 6px;min-width:36px;min-height:36px;flex-shrink:0">×</button>';
+      h+='<button onclick="delTask(\''+bl.id+'\',\''+tk.id+'\',event)" style="background:none;border:none;font-size:20px;color:var(--txt3);cursor:pointer;padding:4px 6px;min-width:36px;min-height:36px;flex-shrink:0;touch-action:manipulation;opacity:.5">×</button>';
       h+='</div>';
       if(tk.exp){
-        h+='<div class="sub-area">';
+        h+='<div style="background:var(--bg2)">';
         for(var k=0;k<(tk.sub||[]).length;k++){
           var s=tk.sub[k];
           h+='<div class="sub-tk'+(s.done?' done':'')+'">';
-          h+='<button class="chk schk'+(s.done?' on':'')+'" data-action="toggleSub" data-bid="'+bl.id+'" data-tid="'+tk.id+'" data-sid="'+s.id+'" style="border-color:'+bc+';background:'+(s.done?bc:'transparent')+'">'+(s.done?'<span style="color:#fff;font-size:9px;pointer-events:none">&#10003;</span>':'')+'</button>';
+          h+='<button onclick="toggleSub(\''+bl.id+'\',\''+tk.id+'\',\''+s.id+'\')" style="width:18px;height:18px;min-width:18px;border-radius:4px;border:2px solid '+bc+';background:'+(s.done?bc:'transparent')+';cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;touch-action:manipulation;padding:0">'+(s.done?'<span style="color:#fff;font-size:10px;line-height:1">✓</span>':'')+'</button>';
           h+='<div class="stxt">'+s.txt+'</div>';
-          h+='<button data-action="delSub" data-bid="'+bl.id+'" data-tid="'+tk.id+'" data-sid="'+s.id+'" style="opacity:.4;background:none;border:none;font-size:15px;color:var(--txt3);cursor:pointer;padding:3px 5px;min-width:28px;min-height:28px;flex-shrink:0">×</button>';
+          h+='<button onclick="delSub(\''+bl.id+'\',\''+tk.id+'\',\''+s.id+'\',event)" style="background:none;border:none;font-size:16px;color:var(--txt3);cursor:pointer;padding:3px 5px;min-width:28px;min-height:28px;flex-shrink:0;touch-action:manipulation;opacity:.45">×</button>';
           h+='</div>';
         }
-        h+='<div class="sub-add"><input class="sinp" id="sinp_'+tk.id+'" placeholder="+ Sub-tarea..." onkeydown="hsk(event,\''+bl.id+'\',\''+tk.id+'\')"><button data-action="addSub" data-bid="'+bl.id+'" data-tid="'+tk.id+'" class="sabtn" style="background:'+bc+';min-height:34px;min-width:36px">+</button></div>';
+        h+='<div class="sub-add">';
+        h+='<input class="sinp" id="sinp_'+tk.id+'" placeholder="+ Sub-tarea..." onkeydown="hsk(event,\''+bl.id+'\',\''+tk.id+'\')">';
+        h+='<button onclick="addSub(\''+bl.id+'\',\''+tk.id+'\')" style="font-size:13px;padding:6px 12px;border-radius:6px;border:none;color:#fff;cursor:pointer;font-family:inherit;font-weight:500;background:'+bc+';min-height:34px;touch-action:manipulation">+</button>';
+        h+='</div>';
         h+='</div>';
       }
     }
     h+='</div>';
-    h+='<div class="add-row"><input class="ainp" id="ainp_'+bl.id+'" placeholder="+ Agregar tarea..." onkeydown="hk(event,\''+bl.id+'\')"><button data-action="addTask" data-bid="'+bl.id+'" class="abtn" style="background:'+bc+';min-height:36px">+ Add</button></div>';
+    h+='<div class="add-row">';
+    h+='<input class="ainp" id="ainp_'+bl.id+'" placeholder="+ Agregar tarea..." onkeydown="hk(event,\''+bl.id+'\')">';
+    h+='<button onclick="addTask(\''+bl.id+'\')" style="font-size:12px;padding:6px 12px;border-radius:var(--rad);border:none;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;background:'+bc+';min-height:36px;touch-action:manipulation;flex-shrink:0">+ Add</button>';
+    h+='</div>';
     h+='</div></div>';
   }
   document.getElementById('v0').innerHTML=h;
@@ -599,48 +595,6 @@ function renderChart(){
 }
 
 document.getElementById('fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-// EVENT DELEGATION — fixes all tap issues on iOS Safari
-// One listener on document handles ALL dynamic content taps
-document.addEventListener('touchend', function(e){
-  var el = e.target;
-  // Walk up max 5 levels to find a data-action element
-  for(var i=0;i<5;i++){
-    if(!el || el===document.body) break;
-    var a = el.getAttribute('data-action');
-    if(a){
-      e.preventDefault();
-      var bid = el.getAttribute('data-bid');
-      var tid = el.getAttribute('data-tid');
-      var sid = el.getAttribute('data-sid');
-      if(a==='toggleBlq') toggleBlq(bid);
-      else if(a==='toggleTask') toggleTask(bid,tid);
-      else if(a==='toggleSub') toggleSub(bid,tid,sid);
-      else if(a==='toggleExp') toggleExp(bid,tid,e);
-      else if(a==='delTask') delTask(bid,tid,e);
-      else if(a==='delSub') delSub(bid,tid,sid,e);
-      else if(a==='editHora') startEditHora(bid,tid,e);
-      else if(a==='addTask') addTask(bid);
-      else if(a==='addSub') addSub(bid,tid);
-      else if(a==='efHecho') efHecho();
-      else if(a==='efSig') efSig();
-      else if(a==='closeFoco'){FOCO=false;document.getElementById('btnFoco').classList.remove('on');renderHoy();}
-      else if(a==='tab') setTab(parseInt(el.getAttribute('data-idx')));
-      else if(a==='toggleTarde') toggleTarde();
-      else if(a==='toggleFoco') toggleFoco();
-      else if(a==='openStart') openStartModal();
-      else if(a==='openSleep') openSleepModal();
-      else if(a==='startDay') startDay();
-      else if(a==='closeStart') closeStartModal();
-      else if(a==='closeSleep') closeSleepModal();
-      else if(a==='gcPeriod'){gcPeriod=parseInt(el.getAttribute('data-val'));renderChart();}
-      else if(a==='gcMode'){gcMode=el.getAttribute('data-val');renderChart();}
-      return;
-    }
-    el = el.parentElement;
-  }
-}, {passive:false});
-
 loadAll();
 
 </script>
