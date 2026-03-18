@@ -128,10 +128,10 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div class="t-sub" id="saveStatus">Solo por hoy</div>
     </div>
     <div class="topbtns">
-      <button class="tbtn" style="--ac:#7F77DD" id="btnTarde" onclick="toggleTarde()">🌆 Tarde</button>
-      <button class="tbtn" style="--ac:#1D9E75" id="btnFoco" onclick="toggleFoco()">🎯 Enfoque</button>
-      <button id="btnStart" onclick="openStartModal()" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #639922;background:#63992218;color:#639922;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none">☀️ Empezar día</button>
-      <button id="btnSleep" onclick="openSleepModal()" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #888780;background:#88878018;color:#888780;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none">🌙 Ya me voy</button>
+      <button class="tbtn" style="--ac:#7F77DD" id="btnTarde" data-action="toggleTarde">🌆 Tarde</button>
+      <button class="tbtn" style="--ac:#1D9E75" id="btnFoco" data-action="toggleFoco">🎯 Enfoque</button>
+      <button id="btnStart" data-action="openStart" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #639922;background:#63992218;color:#639922;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none">☀️ Empezar día</button>
+      <button id="btnSleep" data-action="openSleep" style="font-size:11px;padding:5px 12px;border-radius:20px;border:1.5px solid #888780;background:#88878018;color:#888780;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap;display:none">🌙 Ya me voy</button>
     </div>
   </div>
   <!-- MODAL INICIO DE DÍA -->
@@ -163,10 +163,10 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
           <span style="font-size:12px;color:var(--txt2)">8:00 → Ducha · lonche · jugo verde</span>
         </div>
       </div>
-      <button onclick="startDay()" style="width:100%;font-size:14px;padding:12px;border-radius:var(--rad);border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:.01em">
+      <button data-action="startDay" style="width:100%;font-size:14px;padding:12px;border-radius:var(--rad);border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:700;letter-spacing:.01em">
         ☀️ Activar Mi Salud al Día
       </button>
-      <button onclick="closeStartModal()" style="margin-top:10px;width:100%;font-size:11px;padding:7px;border-radius:var(--rad);border:0.5px solid var(--brd2);background:none;color:var(--txt3);cursor:pointer;font-family:inherit">
+      <button data-action="closeStart" style="margin-top:10px;width:100%;font-size:11px;padding:7px;border-radius:var(--rad);border:0.5px solid var(--brd2);background:none;color:var(--txt3);cursor:pointer;font-family:inherit">
         Ya lo vi, entrar directo
       </button>
     </div>
@@ -180,15 +180,15 @@ body{background:var(--bg3);font-family:-apple-system,BlinkMacSystemFont,'Segoe U
       <div style="font-size:12px;color:var(--txt2);margin-bottom:20px;font-style:italic">Solo por hoy — lo lograste.</div>
       <div id="sleepStats" style="background:var(--bg2);border-radius:var(--rad);padding:14px;margin-bottom:20px"></div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:18px;line-height:1.6">El día quedó guardado en tu historial.<br>Mañana empieza fresco a las 6:00.</div>
-      <button onclick="closeSleepModal()" style="width:100%;font-size:13px;padding:10px;border-radius:var(--rad);border:none;background:#888780;color:#fff;cursor:pointer;font-family:inherit;font-weight:600">Cerrar · Buenas noches 🌙</button>
+      <button data-action="closeSleep" style="width:100%;font-size:13px;padding:10px;border-radius:var(--rad);border:none;background:#888780;color:#fff;cursor:pointer;font-family:inherit;font-weight:600">Cerrar · Buenas noches 🌙</button>
     </div>
   </div>
   <div class="content">
     <div class="tabs">
-      <div class="tab on" id="tab0" onclick="setTab(0)">Hoy</div>
-      <div class="tab" id="tab1" onclick="setTab(1)">Horario</div>
-      <div class="tab" id="tab2" onclick="setTab(2)">Historial</div>
-      <div class="tab" id="tab3" onclick="setTab(3)">Gráfica</div>
+      <div class="tab on" id="tab0" data-action="tab" data-idx="0">Hoy</div>
+      <div class="tab" id="tab1" data-action="tab" data-idx="1">Horario</div>
+      <div class="tab" id="tab2" data-action="tab" data-idx="2">Historial</div>
+      <div class="tab" id="tab3" data-action="tab" data-idx="3">Gráfica</div>
     </div>
     <div class="progbar" id="progbar"></div>
     <div id="v0"></div>
@@ -470,7 +470,7 @@ function renderHoy(){
   if(FOCO){
     var p=getPend();
     if(!p.length){
-      h+='<div class="ef-box"><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Modo Enfoque</div><div style="font-size:17px;font-weight:700;color:#639922;margin-bottom:12px">Dia completado 🎉</div><button onclick="FOCO=false;document.getElementById(\'btnFoco\').classList.remove(\'on\');renderHoy()" style="font-size:12px;padding:10px 20px;border-radius:20px;border:0.5px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:44px">Cerrar</button></div>';
+      h+='<div class="ef-box"><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Modo Enfoque</div><div style="font-size:17px;font-weight:700;color:#639922;margin-bottom:12px">Dia completado!</div><button data-action="closeFoco" style="font-size:12px;padding:10px 20px;border-radius:20px;border:0.5px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:44px">Cerrar</button></div>';
     } else {
       if(efIdx>=p.length)efIdx=0;var item=p[efIdx];
       h+='<div class="ef-box" style="border-color:'+item.bl.color+'55">';
@@ -479,66 +479,71 @@ function renderHoy(){
       h+='<div style="font-size:16px;font-weight:500;color:var(--txt);line-height:1.4;margin-bottom:'+(item.tk.hora?'4px':'14px')+'">'+item.tk.txt+'</div>';
       if(item.tk.hora)h+='<div style="font-size:10px;color:var(--txt2);margin-bottom:14px">'+item.tk.hora+'</div>';
       h+='<div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">';
-      h+='<button onclick="efHecho()" style="font-size:13px;padding:10px 20px;border-radius:20px;border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;min-height:44px" type="button">Hecho</button>';
-      h+='<button onclick="efSig()" style="font-size:13px;padding:10px 18px;border-radius:20px;border:0.5px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:44px" type="button">Saltar</button>';
+      h+='<button data-action="efHecho" style="font-size:13px;padding:12px 22px;border-radius:20px;border:none;background:#639922;color:#fff;cursor:pointer;font-family:inherit;font-weight:600;min-height:48px">Hecho</button>';
+      h+='<button data-action="efSig" style="font-size:13px;padding:12px 20px;border-radius:20px;border:0.5px solid var(--brd2);background:none;color:var(--txt2);cursor:pointer;font-family:inherit;min-height:48px">Saltar</button>';
       h+='</div>';
-      h+='<button onclick="FOCO=false;document.getElementById(\'btnFoco\').classList.remove(\'on\');renderHoy()" style="font-size:11px;padding:8px 14px;border-radius:20px;border:0.5px solid var(--brd);background:none;color:var(--txt3);cursor:pointer;font-family:inherit;min-height:36px" type="button">Cerrar modo enfoque</button>';
+      h+='<button data-action="closeFoco" style="font-size:11px;padding:8px 14px;border-radius:20px;border:0.5px solid var(--brd);background:none;color:var(--txt3);cursor:pointer;font-family:inherit;min-height:36px">Cerrar modo enfoque</button>';
       h+='</div>';
     }
   }
   for(var i=0;i<orden.length;i++){
-    var bl=orden[i];var bc=bl.color;var bDone=bl.tareas.filter(function(t){return t.done}).length;var isO=openB[bl.id];
-    h+='<div class="blq" data-bid="'+bl.id+'" style="--bc:'+bc+';border-color:'+bc+'44">';
-    h+='<button class="blq-hdr" style="background:'+bl.bg+'30;width:100%;border:none;text-align:left;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between" onclick="toggleBlq(\''+bl.id+'\')" type="button">';
+    var bl=orden[i];var bc=bl.color;
+    var bDone=bl.tareas.filter(function(t){return t.done}).length;
+    var isO=openB[bl.id];
+    h+='<div class="blq" style="border-color:'+bc+'44">';
+    h+='<button class="blq-hdr" data-action="toggleBlq" data-bid="'+bl.id+'" style="background:'+bl.bg+'30;width:100%;border:none;text-align:left;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:space-between;padding:9px 13px;min-height:52px">';
     h+='<div class="blq-l"><div class="blq-num" style="background:'+bc+'">'+bl.num+'</div><div><div class="blq-name">'+bl.nombre+'</div><div class="blq-hora">'+getHora(bl)+'</div></div></div>';
     h+='<div class="blq-r"><span class="blq-pr">'+bDone+'/'+bl.tareas.length+'</span><span class="chev'+(isO?' op':'')+'">▾</span></div>';
     h+='</button>';
     h+='<div class="blq-body'+(isO?' op':'')+'">';
     h+='<div style="padding:2px 0">';
     for(var j=0;j<bl.tareas.length;j++){
-      var tk=bl.tareas[j];var sD=(tk.sub||[]).filter(function(s){return s.done}).length;var sT=(tk.sub||[]).length;
-      var isE=(editTid===tk.id);var isHE=(editHoraTid===tk.id);
+      var tk=bl.tareas[j];
+      var sD=(tk.sub||[]).filter(function(s){return s.done}).length;
+      var sT=(tk.sub||[]).length;
+      var isE=(editTid===tk.id);
+      var isHE=(editHoraTid===tk.id);
       h+='<div class="tk'+(tk.done?' done':'')+'" data-tid="'+tk.id+'" data-bid="'+bl.id+'" style="--bc:'+bc+'">';
       h+='<div class="dh"><div class="dl"></div><div class="dl"></div><div class="dl"></div></div>';
-      h+='<button class="chk'+(tk.done?' on':'')+'" style="border-color:'+bc+';background:'+(tk.done?bc:'transparent')+'" onclick="toggleTask(\''+bl.id+'\',\''+tk.id+'\')" type="button">'+(tk.done?'<span style="color:#fff;font-size:11px">✓</span>':'')+'</button>';
+      h+='<button class="chk'+(tk.done?' on':'')+'" data-action="toggleTask" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="border-color:'+bc+';background:'+(tk.done?bc:'transparent')+';min-width:22px;min-height:22px">'+(tk.done?'<span style="color:#fff;font-size:11px;pointer-events:none">&#10003;</span>':'')+'</button>';
       h+='<div class="tk-content">';
       if(isE){
-        h+='<input class="tk-edit" id="ei_'+tk.id+'" value="'+tk.txt.replace(/"/g,'&quot;')+'" style="border-color:'+bc+'" onblur="commitEdit(\''+bl.id+'\',\''+tk.id+'\')" onkeydown="ek(event,\''+bl.id+'\',\''+tk.id+'\')" onclick="event.stopPropagation()">';
+        h+='<input class="tk-edit" id="ei_'+tk.id+'" value="'+tk.txt.replace(/"/g,'\"').replace(/'/g,"&#39;")+'" style="border-color:'+bc+'" onblur="commitEdit(\''+bl.id+'\',\''+tk.id+'\')" onkeydown="ek(event,\''+bl.id+'\',\''+tk.id+'\')">';
         h+='<div style="font-size:9px;color:var(--txt3);margin-top:2px">Enter para guardar</div>';
       } else {
         h+='<div class="tk-main">';
         h+='<div class="tk-txt" ondblclick="startEdit(\''+bl.id+'\',\''+tk.id+'\')" ontouchend="handleTap(\''+bl.id+'\',\''+tk.id+'\',event)">'+tk.txt+(tk.opt?'<span class="tk-opt" style="color:'+bc+';background:'+bc+'18">opcional</span>':'')+'</div>';
-        h+='<button class="sub-tog" style="'+(tk.exp?'border-color:'+bc+';color:'+bc:'')+'" onclick="toggleExp(\''+bl.id+'\',\''+tk.id+'\',event)" type="button">'+(sT>0?(sD+'/'+sT+' sub'):'+ sub')+'</button>';
+        h+='<button class="sub-tog" data-action="toggleExp" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="'+(tk.exp?'border-color:'+bc+';color:'+bc:'')+'">'+(sT>0?(sD+'/'+sT+' sub'):'+ sub')+'</button>';
         h+='</div>';
         h+='<div class="tk-hora-wrap">';
         if(isHE){
-          h+='<input class="tk-hora-inp" id="hi_'+tk.id+'" value="'+(tk.hora||'')+'" placeholder="ej. 9:00-10:30" style="border-color:'+bc+'" onblur="commitHora(\''+bl.id+'\',\''+tk.id+'\')" onkeydown="hk2(event,\''+bl.id+'\',\''+tk.id+'\')" onclick="event.stopPropagation()">';
+          h+='<input class="tk-hora-inp" id="hi_'+tk.id+'" value="'+(tk.hora||'')+'" placeholder="ej. 9:00-10:30" style="border-color:'+bc+'" onblur="commitHora(\''+bl.id+'\',\''+tk.id+'\')" onkeydown="hk2(event,\''+bl.id+'\',\''+tk.id+'\')">';
         } else if(tk.hora){
-          h+='<button class="tk-hora" style="color:'+bc+';background:'+bc+'18;border:0.5px solid '+bc+'44" onclick="startEditHora(\''+bl.id+'\',\''+tk.id+'\',event)" type="button">'+tk.hora+' ✎</button>';
+          h+='<button class="tk-hora" data-action="editHora" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="color:'+bc+';background:'+bc+'18;border:0.5px solid '+bc+'44">'+tk.hora+' ✎</button>';
         } else {
-          h+='<button class="tk-hora-add" style="opacity:.6" onclick="startEditHora(\''+bl.id+'\',\''+tk.id+'\',event)" type="button">+ hora</button>';
+          h+='<button class="tk-hora-add" data-action="editHora" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="opacity:.65">+ hora</button>';
         }
         h+='</div>';
       }
       h+='</div>';
-      h+='<button onclick="delTask(\''+bl.id+'\',\''+tk.id+'\',event)" type="button" style="opacity:.45;background:none;border:none;font-size:18px;color:var(--txt3);cursor:pointer;padding:4px 6px;min-width:32px;min-height:32px;flex-shrink:0">×</button>';
+      h+='<button data-action="delTask" data-bid="'+bl.id+'" data-tid="'+tk.id+'" style="opacity:.45;background:none;border:none;font-size:18px;color:var(--txt3);cursor:pointer;padding:4px 6px;min-width:36px;min-height:36px;flex-shrink:0">×</button>';
       h+='</div>';
       if(tk.exp){
         h+='<div class="sub-area">';
         for(var k=0;k<(tk.sub||[]).length;k++){
           var s=tk.sub[k];
           h+='<div class="sub-tk'+(s.done?' done':'')+'">';
-          h+='<button class="chk schk'+(s.done?' on':'')+'" style="border-color:'+bc+';background:'+(s.done?bc:'transparent')+'" onclick="toggleSub(\''+bl.id+'\',\''+tk.id+'\',\''+s.id+'\')" type="button">'+(s.done?'<span style="color:#fff;font-size:9px">✓</span>':'')+'</button>';
+          h+='<button class="chk schk'+(s.done?' on':'')+'" data-action="toggleSub" data-bid="'+bl.id+'" data-tid="'+tk.id+'" data-sid="'+s.id+'" style="border-color:'+bc+';background:'+(s.done?bc:'transparent')+'">'+(s.done?'<span style="color:#fff;font-size:9px;pointer-events:none">&#10003;</span>':'')+'</button>';
           h+='<div class="stxt">'+s.txt+'</div>';
-          h+='<button onclick="delSub(\''+bl.id+'\',\''+tk.id+'\',\''+s.id+'\',event)" type="button" style="opacity:.4;background:none;border:none;font-size:15px;color:var(--txt3);cursor:pointer;padding:3px 5px;min-width:28px;min-height:28px;flex-shrink:0">×</button>';
+          h+='<button data-action="delSub" data-bid="'+bl.id+'" data-tid="'+tk.id+'" data-sid="'+s.id+'" style="opacity:.4;background:none;border:none;font-size:15px;color:var(--txt3);cursor:pointer;padding:3px 5px;min-width:28px;min-height:28px;flex-shrink:0">×</button>';
           h+='</div>';
         }
-        h+='<div class="sub-add"><input class="sinp" id="sinp_'+tk.id+'" placeholder="+ Sub-tarea..." onkeydown="hsk(event,\''+bl.id+'\',\''+tk.id+'\')" onclick="event.stopPropagation()"><button class="sabtn" style="background:'+bc+';min-height:34px;min-width:36px" onclick="addSub(\''+bl.id+'\',\''+tk.id+'\')" type="button">+</button></div>';
+        h+='<div class="sub-add"><input class="sinp" id="sinp_'+tk.id+'" placeholder="+ Sub-tarea..." onkeydown="hsk(event,\''+bl.id+'\',\''+tk.id+'\')"><button data-action="addSub" data-bid="'+bl.id+'" data-tid="'+tk.id+'" class="sabtn" style="background:'+bc+';min-height:34px;min-width:36px">+</button></div>';
         h+='</div>';
       }
     }
     h+='</div>';
-    h+='<div class="add-row"><input class="ainp" id="ainp_'+bl.id+'" placeholder="+ Agregar tarea..." onkeydown="hk(event,\''+bl.id+'\')" onclick="event.stopPropagation()"><button class="abtn" style="background:'+bc+';min-height:36px" onclick="addTask(\''+bl.id+'\')" type="button">+ Add</button></div>';
+    h+='<div class="add-row"><input class="ainp" id="ainp_'+bl.id+'" placeholder="+ Agregar tarea..." onkeydown="hk(event,\''+bl.id+'\')"><button data-action="addTask" data-bid="'+bl.id+'" class="abtn" style="background:'+bc+';min-height:36px">+ Add</button></div>';
     h+='</div></div>';
   }
   document.getElementById('v0').innerHTML=h;
@@ -594,7 +599,50 @@ function renderChart(){
 }
 
 document.getElementById('fecha').textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// EVENT DELEGATION — fixes all tap issues on iOS Safari
+// One listener on document handles ALL dynamic content taps
+document.addEventListener('touchend', function(e){
+  var el = e.target;
+  // Walk up max 5 levels to find a data-action element
+  for(var i=0;i<5;i++){
+    if(!el || el===document.body) break;
+    var a = el.getAttribute('data-action');
+    if(a){
+      e.preventDefault();
+      var bid = el.getAttribute('data-bid');
+      var tid = el.getAttribute('data-tid');
+      var sid = el.getAttribute('data-sid');
+      if(a==='toggleBlq') toggleBlq(bid);
+      else if(a==='toggleTask') toggleTask(bid,tid);
+      else if(a==='toggleSub') toggleSub(bid,tid,sid);
+      else if(a==='toggleExp') toggleExp(bid,tid,e);
+      else if(a==='delTask') delTask(bid,tid,e);
+      else if(a==='delSub') delSub(bid,tid,sid,e);
+      else if(a==='editHora') startEditHora(bid,tid,e);
+      else if(a==='addTask') addTask(bid);
+      else if(a==='addSub') addSub(bid,tid);
+      else if(a==='efHecho') efHecho();
+      else if(a==='efSig') efSig();
+      else if(a==='closeFoco'){FOCO=false;document.getElementById('btnFoco').classList.remove('on');renderHoy();}
+      else if(a==='tab') setTab(parseInt(el.getAttribute('data-idx')));
+      else if(a==='toggleTarde') toggleTarde();
+      else if(a==='toggleFoco') toggleFoco();
+      else if(a==='openStart') openStartModal();
+      else if(a==='openSleep') openSleepModal();
+      else if(a==='startDay') startDay();
+      else if(a==='closeStart') closeStartModal();
+      else if(a==='closeSleep') closeSleepModal();
+      else if(a==='gcPeriod'){gcPeriod=parseInt(el.getAttribute('data-val'));renderChart();}
+      else if(a==='gcMode'){gcMode=el.getAttribute('data-val');renderChart();}
+      return;
+    }
+    el = el.parentElement;
+  }
+}, {passive:false});
+
 loadAll();
+
 </script>
 </body>
 </html>
