@@ -114,7 +114,7 @@ button{cursor:pointer;touch-action:manipulation}
     <div style="font-size:11px;color:var(--txt2);font-style:italic;margin-bottom:12px">Solo por hoy — lo lograste.</div>
     <div id="mStats" style="background:var(--bg2);border-radius:var(--r);padding:12px;margin-bottom:12px"></div>
     <div style="font-size:10px;color:var(--txt3);margin-bottom:12px">El dia quedo guardado. Manana empieza a las 6:00.</div>
-    <button class="mbtn" style="background:#888780" onclick="DA.cerrarSueno()">Cerrar · Buenas noches</button>
+<button class="mbtn" style="background:#888780" onclick="DA.confirmarSueno()">Cerrar · Buenas noches</button>
 <button class="mbtn2" style="margin-top:6px;color:#E24B4A;border-color:#E24B4A" onclick="DA.cerrarSueno()">Cancelar — seguir despierto</button>
   </div>
 </div>
@@ -323,10 +323,9 @@ function startDay(){state.started=true;save();cerrarInicio();renderAll();}
 function abrirSueno(){
   var t12=getTk('b4','t12'),t13=getTk('b4','t13');
   if(!t12.done||!t13.done){
-    setStatus('Marca primero las tareas de sueno (t12 y t13)',3000);
+    setStatus('Primero marca: Preparacion y Dormir 8.5h',3000);
     return;
   }
-  state.slept=true;save();
   var st=getStats(),pc=st.p,emoji=pc>=80?'Excelente':pc>=50?'Buen avance':'Manana mas';
   var col=pc>=80?'#639922':pc>=50?'#EF9F27':'#888780';
   var rows='';
@@ -344,7 +343,12 @@ function updBtns(){
   var s=state&&state.started,sl=state&&state.slept;
   var bi=document.getElementById('btnInicio'),bs=document.getElementById('btnSueno');
   if(bi)bi.style.display=(!s||sl)?'inline-block':'none';
-  if(bs)bs.style.display=(s&&!sl)?'inline-block':'none';
+  if(bs){
+    var t12=state&&getBl('b4')&&getTk('b4','t12');
+    var t13=state&&getBl('b4')&&getTk('b4','t13');
+    var suenolisto=t12&&t13&&t12.done&&t13.done;
+    bs.style.display=(s&&!sl&&suenolisto)?'inline-block':'none';
+  }
 }
 function setTab(n){curTab=n;for(var i=0;i<4;i++){var t=document.getElementById('tab'+i),v=document.getElementById('v'+i);if(t)t.className='tab'+(n===i?' on':'');if(v)v.style.display=n===i?'block':'none';}if(n===0)renderHoy();else if(n===1)renderHorario();else if(n===2)renderHistorial();else if(n===3)renderChart();}
 function toggleTarde(){TARDE=!TARDE;state.tarde=TARDE;var bt=document.getElementById('btnTarde');bt.classList.toggle('on',TARDE);bt.style.background=TARDE?'#7F77DD':'';renderAll();save();}
@@ -544,7 +548,9 @@ function renderChart(){
 return {
   setTab:setTab,toggleTarde:toggleTarde,toggleFoco:toggleFoco,
   abrirInicio:abrirInicio,cerrarInicio:cerrarInicio,startDay:startDay,
-  abrirSueno:abrirSueno,cerrarSueno:cerrarSueno,
+  abrirSueno:abrirSueno,
+cerrarSueno:cerrarSueno,
+confirmarSueno:function(){state.slept=true;save();DA.cerrarSueno();},
   toggleBlq:toggleBlq,toggleTask:toggleTask,toggleSub:toggleSub,
   toggleExp:toggleExp,delTask:delTask,delSub:delSub,
   addTask:addTask,addSub:addSub,
