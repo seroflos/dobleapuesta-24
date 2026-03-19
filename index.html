@@ -130,6 +130,7 @@ button{cursor:pointer;touch-action:manipulation}
     <div class="topbtns">
       <button class="tbtn" id="btnTarde" style="--c:#7F77DD" onclick="DA.toggleTarde()">Tarde</button>
       <button class="tbtn" id="btnFoco" style="--c:#1D9E75" onclick="DA.toggleFoco()">Enfoque</button>
+      <button class="tbtn" id="btnSave" onclick="DA.saveNow()" style="--c:#639922">&#x1F4BE; Save</button>
       <button class="tbtn" id="btnSync" onclick="DA.syncNow()" style="--c:#378ADD">&#x1F504; Sync</button>
       <button id="btnInicio" class="tbtn" style="display:none;border-color:#639922;color:#639922" onclick="DA.abrirInicio()">Empezar dia</button>
       <button id="btnSueno" class="tbtn" style="display:none;border-color:#888780;color:#888780" onclick="DA.abrirSueno()">Ya me voy</button>
@@ -612,6 +613,15 @@ return {
         if(bt)bt.innerHTML='&#x1F504; Sync';
         setStatus('sin internet',2000);
       }
+    });
+  },
+  saveNow:function(){
+    var bt=document.getElementById('btnSave');
+    if(bt)bt.textContent='...';
+    save().then(function(){
+      var bt=document.getElementById('btnSave');
+      if(bt)bt.textContent='✓';
+      setTimeout(function(){if(bt)bt.innerHTML='&#x1F4BE; Save';},1500);
     });
   },
   abrirInicio:abrirInicio, cerrarInicio:cerrarInicio, startDay:startDay,
