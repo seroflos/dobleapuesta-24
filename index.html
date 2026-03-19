@@ -130,6 +130,8 @@ button{cursor:pointer;touch-action:manipulation}
     <div class="topbtns">
       <button class="tbtn" id="btnTarde" style="--c:#7F77DD" onclick="DA.toggleTarde()">Tarde</button>
       <button class="tbtn" id="btnFoco" style="--c:#1D9E75" onclick="DA.toggleFoco()">Enfoque</button>
+      <button class="tbtn" id="btnSync" onclick="DA.syncNow()" style="--c:#378ADD">&#x1F504; Sync</button>
+      <button class="tbtn" onclick="DA.syncNow()">&#x1F504;</button>
       <button id="btnInicio" class="tbtn" style="display:none;border-color:#639922;color:#639922" onclick="DA.abrirInicio()">Empezar dia</button>
       <button id="btnSueno" class="tbtn" style="display:none;border-color:#888780;color:#888780" onclick="DA.abrirSueno()">Ya me voy</button>
     </div>
@@ -236,8 +238,36 @@ function getBl(bid){return state.bloques.find(function(b){return b.id===bid})}
 function getTk(bid,tid){return getBl(bid).tareas.find(function(t){return t.id===tid})}
 
 // ---- SUPABASE ----
+async function syncFromSupabase(){
+  try{
+    var re=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY+'&limit=1',{headers:SH});
+    if(!re.ok)return false;
+    var de=await re.json();
+    if(de&&de.length>0){
+      var r=JSON.parse(de[0].bloques);
+      if(r&&Array.isArray(r)){
+        // Always use Supabase data — it's the source of truth
+        state={bloques:r,date:de[0].fecha,tarde:!!de[0].tarde,started:!!de[0].day_started,slept:!!de[0].day_slept};
+        TARDE=state.tarde;
+        // Save locally so offline works
+        try{localStorage.setItem('da24s',JSON.stringify(state));}catch(e){}
+      }
+    }
+    var rh=await fetch(SURL+'/rest/v1/historial?order=fecha.desc&limit=60',{headers:SH});
+    if(rh.ok){
+      var dh=await rh.json();
+      if(dh&&dh.length){
+        dh.forEach(function(row){hist[row.fecha]={d:row.done,t:row.total,p:row.pct,c:{workout:{p:row.c_workout||0},dieta:{p:row.c_dieta||0},proyecto:{p:row.c_proyecto||0},estudio:{p:row.c_estudio||0},salud_m:{p:row.c_salud_m||0},rutina:{p:row.c_rutina||0},sueno:{p:row.c_sueno||0}}};});
+        try{localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
+      }
+    }
+    return true;
+  }catch(e){return false;}
+}
+
 async function loadAll(){
   setStatus('Cargando...');
+  // 1. Load local first for instant render
   try{
     var ls=localStorage.getItem('da24s');
     if(ls){var s=JSON.parse(ls);if(s.date===TODAY){state=s;TARDE=!!s.tarde;}else{hist[s.date]=snap(s);}}
@@ -247,28 +277,28 @@ async function loadAll(){
   if(!state)state=mkState();
   renderAll();
   updBtns();
-  try{
-    var re=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY+'&limit=1',{headers:SH});
-    if(re.ok){
-      var de=await re.json();
-      if(de&&de.length>0&&!state.started){
-        var r=JSON.parse(de[0].bloques);
-        if(r&&Array.isArray(r)){
-          state={bloques:r,date:de[0].fecha,tarde:de[0].tarde,started:de[0].day_started,slept:de[0].day_slept};
-          TARDE=!!state.tarde;
-        }
-      }
-      var rh=await fetch(SURL+'/rest/v1/historial?order=fecha.desc&limit=60',{headers:SH});
-      if(rh.ok){
-        var dh=await rh.json();
-        if(dh&&dh.length){dh.forEach(function(row){hist[row.fecha]={d:row.done,t:row.total,p:row.pct,c:{workout:{p:row.c_workout||0},dieta:{p:row.c_dieta||0},proyecto:{p:row.c_proyecto||0},estudio:{p:row.c_estudio||0},salud_m:{p:row.c_salud_m||0},rutina:{p:row.c_rutina||0},sueno:{p:row.c_sueno||0}}}});}
-      }
-      setStatus('sincronizado',2000);
-      renderAll();
-    }
-  }catch(e){setStatus('modo local',2000);}
+  // 2. Always sync from Supabase (not just when !started)
+  var ok=await syncFromSupabase();
+  if(ok){
+    setStatus('sincronizado',2000);
+    var bt=document.getElementById('btnTarde');
+    if(bt)bt.classList.toggle('on',TARDE);
+    renderAll();
+  }else{
+    setStatus('modo local',2000);
+  }
   updBtns();
   if(!state.started)setTimeout(abrirInicio,400);
+  // Auto-sync every 30 seconds
+  if(!window._syncInterval){
+    window._syncInterval=setInterval(function(){
+      if(document.visibilityState==='visible'&&!saving){
+        syncFromSupabase().then(function(ok){
+          if(ok){renderAll();updBtns();}
+        });
+      }
+    },30000);
+  }
 }
 
 async function save(){
@@ -551,6 +581,16 @@ function renderChart(){
 // ---- PUBLIC API ----
 return {
   setTab:setTab, toggleTarde:toggleTarde, toggleFoco:toggleFoco,
+  syncNow:function(){
+    var bt=document.getElementById('btnSync');
+    if(bt)bt.textContent='...';
+    syncFromSupabase().then(function(ok){
+      var bt=document.getElementById('btnSync');
+      if(bt)bt.textContent=ok?'✓ Sync':'↺ Sync';
+      setTimeout(function(){if(bt)bt.textContent='↺ Sync';},2000);
+      if(ok){renderAll();updBtns();}
+    });
+  },
   abrirInicio:abrirInicio, cerrarInicio:cerrarInicio, startDay:startDay,
   abrirSueno:abrirSueno, cerrarSueno:cerrarSueno,
   toggleBlq:toggleBlq, toggleTask:toggleTask, toggleSub:toggleSub,
@@ -559,8 +599,27 @@ return {
   startEditHora:startEditHora, commitHora:commitHora,
   startEdit:startEdit, commitEdit:commitEdit, tapEdit:tapEdit,
   efHecho:efHecho, efSig:efSig, efCerrar:efCerrar,
-  renderHoy:renderHoy, renderChart:renderChart,
+  renderHoy:renderHoy, renderChart:renderChart, renderAll:renderAll,
   setGcP:setGcP, setGcM:setGcM,
+  syncNow:function(){
+    var btn=document.getElementById('btnSync')||null;
+    if(btn)btn.textContent='...';
+    syncFromSupabase().then(function(ok){
+      if(ok){renderAll();updBtns();setStatus('sincronizado',2000);}
+      else{setStatus('sin internet',2000);}
+      if(btn)btn.innerHTML='&#x1F504;';
+    });
+  },
+  syncNow:async function(){
+    setStatus('Sincronizando...');
+    var ok=await syncFromSupabase();
+    var bt=document.getElementById('btnTarde');
+    if(bt)bt.classList.toggle('on',TARDE);
+    renderAll();
+    updBtns();
+    setStatus(ok?'sincronizado':'modo local',2000);
+  },
+  syncNow:function(){loadAll();},
   // expose for inline keydown handlers
   get editTid(){return editTid}, set editTid(v){editTid=v},
   get editHoraTid(){return editHoraTid}, set editHoraTid(v){editHoraTid=v},
@@ -568,12 +627,24 @@ return {
     var f=document.getElementById('elFecha');
     if(f)f.textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     loadAll();
+    // Auto-sync every 30 seconds when online
+    setInterval(function(){if(navigator.onLine!==false)loadAll();},30000);
   }
 };
 
 })(); // end DA module
 
 DA.init();
+
+// Sync when returning to the app (switch tabs, lock/unlock phone)
+document.addEventListener('visibilitychange',function(){
+  if(document.visibilityState==='visible'){
+    syncFromSupabase().then(function(ok){
+      if(ok){DA.renderAll&&DA.renderAll();}
+    });
+  }
+});
+
 </script>
 </body>
 </html>
