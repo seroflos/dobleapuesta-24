@@ -563,14 +563,14 @@ return {
       try{localStorage.setItem('da24s',JSON.stringify(state));localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
       var c=sn.c||{};
       var r1=await upsertEstado({tarde:TARDE,day_started:!!state.started,day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts});
-      if(!r1.ok){
+      if(!r1.ok && r1.status!==409){
         var e1=await r1.text();
         setStatus('Error estado: '+r1.status,4000);
         console.error('estado',r1.status,e1);
         _uploading=false;if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}return;
       }
       var r2=await upsertHistorial({done:sn.d,total:sn.t,pct:sn.p,c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,c_sueno:c.sueno?c.sueno.p:0,updated_at:ts});
-      if(!r2.ok){
+      if(!r2.ok && r2.status!==409){
         var e2=await r2.text();
         setStatus('Error historial: '+r2.status,4000);
         console.error('historial',r2.status,e2);
