@@ -231,22 +231,25 @@ function getTk(bid,tid){return getBl(bid).tareas.find(function(t){return t.id===
 // upsert: intenta PATCH primero, si no existe hace POST
 async function upsertEstado(data){
   var r=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY,{
-    method:'PATCH',headers:SH,body:JSON.stringify(data)
+    method:'PATCH',
+    headers:Object.assign({},SH,{'Prefer':'return=representation'}),
+    body:JSON.stringify(data)
   });
-  if(r.ok){var txt=await r.text();if(txt==='[]'||txt==='0'||txt.trim()===''){
-    // no habia fila, insertar
-    r=await fetch(SURL+'/rest/v1/estado',{method:'POST',headers:SH,body:JSON.stringify(Object.assign({fecha:TODAY},data))});
-  }}
+  if(r.ok){var rows=await r.json();if(rows&&rows.length>0)return{ok:true};}
+  r=await fetch(SURL+'/rest/v1/estado',{method:'POST',headers:SH,body:JSON.stringify(Object.assign({fecha:TODAY},data))});
+  if(r.status===409)return{ok:true};
   return r;
 }
 
 async function upsertHistorial(data){
   var r=await fetch(SURL+'/rest/v1/historial?fecha=eq.'+TODAY,{
-    method:'PATCH',headers:SH,body:JSON.stringify(data)
+    method:'PATCH',
+    headers:Object.assign({},SH,{'Prefer':'return=representation'}),
+    body:JSON.stringify(data)
   });
-  if(r.ok){var txt=await r.text();if(txt==='[]'||txt==='0'||txt.trim()===''){
-    r=await fetch(SURL+'/rest/v1/historial',{method:'POST',headers:SH,body:JSON.stringify(Object.assign({fecha:TODAY},data))});
-  }}
+  if(r.ok){var rows=await r.json();if(rows&&rows.length>0)return{ok:true};}
+  r=await fetch(SURL+'/rest/v1/historial',{method:'POST',headers:SH,body:JSON.stringify(Object.assign({fecha:TODAY},data))});
+  if(r.status===409)return{ok:true};
   return r;
 }
 
