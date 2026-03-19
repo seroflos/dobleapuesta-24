@@ -131,7 +131,6 @@ button{cursor:pointer;touch-action:manipulation}
       <button class="tbtn" id="btnTarde" style="--c:#7F77DD" onclick="DA.toggleTarde()">Tarde</button>
       <button class="tbtn" id="btnFoco" style="--c:#1D9E75" onclick="DA.toggleFoco()">Enfoque</button>
       <button class="tbtn" id="btnSync" onclick="DA.syncNow()" style="--c:#378ADD">&#x1F504; Sync</button>
-      <button class="tbtn" onclick="DA.syncNow()">&#x1F504;</button>
       <button id="btnInicio" class="tbtn" style="display:none;border-color:#639922;color:#639922" onclick="DA.abrirInicio()">Empezar dia</button>
       <button id="btnSueno" class="tbtn" style="display:none;border-color:#888780;color:#888780" onclick="DA.abrirSueno()">Ya me voy</button>
     </div>
@@ -238,27 +237,40 @@ function getBl(bid){return state.bloques.find(function(b){return b.id===bid})}
 function getTk(bid,tid){return getBl(bid).tareas.find(function(t){return t.id===tid})}
 
 // ---- SUPABASE ----
+// lastSaveTime: timestamp of our most recent write to Supabase
+var lastSaveTime = 0;
+
+// SOLO LECTURA — nunca escribe, nunca guarda localmente durante sync
 async function syncFromSupabase(){
   try{
     var re=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY+'&limit=1',{headers:SH});
     if(!re.ok)return false;
     var de=await re.json();
     if(de&&de.length>0){
-      var r=JSON.parse(de[0].bloques);
-      if(r&&Array.isArray(r)){
-        // Always use Supabase data — it's the source of truth
-        state={bloques:r,date:de[0].fecha,tarde:!!de[0].tarde,started:!!de[0].day_started,slept:!!de[0].day_slept};
-        TARDE=state.tarde;
-        // Save locally so offline works
-        try{localStorage.setItem('da24s',JSON.stringify(state));}catch(e){}
+      var remote=de[0];
+      var remoteTime=remote.updated_at?new Date(remote.updated_at).getTime():0;
+      // Solo aplica si Supabase tiene datos más nuevos que nuestro último save
+      if(remoteTime>lastSaveTime){
+        var r=JSON.parse(remote.bloques);
+        if(r&&Array.isArray(r)){
+          state={bloques:r,date:remote.fecha,tarde:!!remote.tarde,started:!!remote.day_started,slept:!!remote.day_slept};
+          TARDE=state.tarde;
+          var bt=document.getElementById('btnTarde');
+          if(bt)bt.classList.toggle('on',TARDE);
+        }
       }
     }
     var rh=await fetch(SURL+'/rest/v1/historial?order=fecha.desc&limit=60',{headers:SH});
     if(rh.ok){
       var dh=await rh.json();
       if(dh&&dh.length){
-        dh.forEach(function(row){hist[row.fecha]={d:row.done,t:row.total,p:row.pct,c:{workout:{p:row.c_workout||0},dieta:{p:row.c_dieta||0},proyecto:{p:row.c_proyecto||0},estudio:{p:row.c_estudio||0},salud_m:{p:row.c_salud_m||0},rutina:{p:row.c_rutina||0},sueno:{p:row.c_sueno||0}}};});
-        try{localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
+        dh.forEach(function(row){
+          hist[row.fecha]={d:row.done,t:row.total,p:row.pct,c:{
+            workout:{p:row.c_workout||0},dieta:{p:row.c_dieta||0},
+            proyecto:{p:row.c_proyecto||0},estudio:{p:row.c_estudio||0},
+            salud_m:{p:row.c_salud_m||0},rutina:{p:row.c_rutina||0},sueno:{p:row.c_sueno||0}
+          }};
+        });
       }
     }
     return true;
@@ -304,12 +316,17 @@ async function loadAll(){
 async function save(){
   state.tarde=TARDE;state.date=TODAY;
   var sn=snap(state);hist[TODAY]=sn;
+  // Always save locally first
   try{localStorage.setItem('da24s',JSON.stringify(state));localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
+  // Track when we last saved so sync doesn't overwrite us
+  lastSaveTime=Date.now();
+  // Don't queue multiple simultaneous saves
   if(saving)return;saving=true;
   try{
     var c=sn.c||{};
-    await fetch(SURL+'/rest/v1/estado',{method:'POST',headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({fecha:TODAY,tarde:TARDE,day_started:!!state.started,day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:new Date().toISOString()})});
-    await fetch(SURL+'/rest/v1/historial',{method:'POST',headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({fecha:TODAY,done:sn.d,total:sn.t,pct:sn.p,c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,c_sueno:c.sueno?c.sueno.p:0,updated_at:new Date().toISOString()})});
+    var ts=new Date().toISOString();
+    await fetch(SURL+'/rest/v1/estado',{method:'POST',headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({fecha:TODAY,tarde:TARDE,day_started:!!state.started,day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts})});
+    await fetch(SURL+'/rest/v1/historial',{method:'POST',headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({fecha:TODAY,done:sn.d,total:sn.t,pct:sn.p,c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,c_sueno:c.sueno?c.sueno.p:0,updated_at:ts})});
     setStatus('guardado',1500);
   }catch(e){setStatus('guardado local',1500);}
   saving=false;
@@ -584,11 +601,17 @@ return {
   syncNow:function(){
     var bt=document.getElementById('btnSync');
     if(bt)bt.textContent='...';
+    // SOLO lee de Supabase — nunca escribe
     syncFromSupabase().then(function(ok){
       var bt=document.getElementById('btnSync');
-      if(bt)bt.textContent=ok?'✓ Sync':'↺ Sync';
-      setTimeout(function(){if(bt)bt.textContent='↺ Sync';},2000);
-      if(ok){renderAll();updBtns();}
+      if(ok){
+        renderAll();updBtns();
+        if(bt)bt.textContent='✓';
+        setTimeout(function(){if(bt)bt.innerHTML='&#x1F504; Sync';},1500);
+      }else{
+        if(bt)bt.innerHTML='&#x1F504; Sync';
+        setStatus('sin internet',2000);
+      }
     });
   },
   abrirInicio:abrirInicio, cerrarInicio:cerrarInicio, startDay:startDay,
