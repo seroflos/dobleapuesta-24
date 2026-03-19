@@ -99,9 +99,7 @@ button{cursor:pointer;touch-action:manipulation}
     <div style="font-size:12px;color:#38BDF8;font-weight:500;line-height:1.9;margin-bottom:14px">Solo por hoy.<br>Un bloque a la vez.<br>Tu puedes con esto.</div>
     <div style="background:var(--bg2);border-radius:var(--r);padding:10px;margin-bottom:14px;text-align:left;font-size:11px;color:var(--txt2);line-height:2">
       <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Tu dia empieza con</div>
-      Bloque 1 — Despertar 6:00<br>
-      7:00 Workout<br>
-      8:00 Ducha · lonche · jugo
+      Bloque 1 — Despertar 6:00<br>7:00 Workout<br>8:00 Ducha · lonche · jugo
     </div>
     <button class="mbtn" style="background:#639922" onclick="DA.startDay()">Activar Mi Salud al Dia</button>
     <button class="mbtn2" onclick="DA.cerrarInicio()">Ya lo vi, entrar directo</button>
@@ -230,32 +228,6 @@ function setStatus(m,ms){var el=document.getElementById('elStatus');if(el)el.tex
 function getBl(bid){return state.bloques.find(function(b){return b.id===bid})}
 function getTk(bid,tid){return getBl(bid).tareas.find(function(t){return t.id===tid})}
 
-// ---- SUBIR: escribe estado actual a Supabase ----
-async function pushToSupabase(){
-  state.tarde=TARDE;state.date=TODAY;
-  var ts=new Date().toISOString();
-  state.updated_at=ts;
-  var sn=snap(state);hist[TODAY]=sn;
-  try{localStorage.setItem('da24s',JSON.stringify(state));localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
-  var c=sn.c||{};
-  var r1=await fetch(SURL+'/rest/v1/estado',{
-    method:'POST',
-    headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),
-    body:JSON.stringify({fecha:TODAY,tarde:TARDE,day_started:!!state.started,day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts})
-  });
-  var r2=await fetch(SURL+'/rest/v1/historial',{
-    method:'POST',
-    headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),
-    body:JSON.stringify({fecha:TODAY,done:sn.d,total:sn.t,pct:sn.p,
-      c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,
-      c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,
-      c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,
-      c_sueno:c.sueno?c.sueno.p:0,updated_at:ts})
-  });
-  return r1.ok&&r2.ok;
-}
-
-// ---- SYNC: lee estado mas reciente de Supabase ----
 async function pullFromSupabase(){
   try{
     var re=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY+'&limit=1',{headers:SH});
@@ -268,8 +240,7 @@ async function pullFromSupabase(){
       if(remoteTime>localTime){
         var r=JSON.parse(remote.bloques);
         if(r&&Array.isArray(r)){
-          state={bloques:r,date:remote.fecha,tarde:!!remote.tarde,
-            started:!!remote.day_started,slept:!!remote.day_slept,updated_at:remote.updated_at};
+          state={bloques:r,date:remote.fecha,tarde:!!remote.tarde,started:!!remote.day_started,slept:!!remote.day_slept,updated_at:remote.updated_at};
           TARDE=state.tarde;
           try{localStorage.setItem('da24s',JSON.stringify(state));}catch(e){}
           var bt=document.getElementById('btnTarde');
@@ -281,13 +252,7 @@ async function pullFromSupabase(){
     if(rh.ok){
       var dh=await rh.json();
       if(dh&&dh.length){
-        dh.forEach(function(row){
-          hist[row.fecha]={d:row.done,t:row.total,p:row.pct,c:{
-            workout:{p:row.c_workout||0},dieta:{p:row.c_dieta||0},
-            proyecto:{p:row.c_proyecto||0},estudio:{p:row.c_estudio||0},
-            salud_m:{p:row.c_salud_m||0},rutina:{p:row.c_rutina||0},sueno:{p:row.c_sueno||0}
-          }};
-        });
+        dh.forEach(function(row){hist[row.fecha]={d:row.done,t:row.total,p:row.pct,c:{workout:{p:row.c_workout||0},dieta:{p:row.c_dieta||0},proyecto:{p:row.c_proyecto||0},estudio:{p:row.c_estudio||0},salud_m:{p:row.c_salud_m||0},rutina:{p:row.c_rutina||0},sueno:{p:row.c_sueno||0}}};});
         try{localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
       }
     }
@@ -295,7 +260,6 @@ async function pullFromSupabase(){
   }catch(e){return false;}
 }
 
-// save() interno — llama pushToSupabase silenciosamente al hacer cambios
 async function save(){
   state.tarde=TARDE;state.date=TODAY;
   var ts=new Date().toISOString();
@@ -350,7 +314,6 @@ function updBtns(){
   if(bi)bi.style.display=(!s||sl)?'inline-block':'none';
   if(bs)bs.style.display=(s&&!sl)?'inline-block':'none';
 }
-
 function setTab(n){curTab=n;for(var i=0;i<4;i++){var t=document.getElementById('tab'+i),v=document.getElementById('v'+i);if(t)t.className='tab'+(n===i?' on':'');if(v)v.style.display=n===i?'block':'none';}if(n===0)renderHoy();else if(n===1)renderHorario();else if(n===2)renderHistorial();else if(n===3)renderChart();}
 function toggleTarde(){TARDE=!TARDE;state.tarde=TARDE;var bt=document.getElementById('btnTarde');bt.classList.toggle('on',TARDE);bt.style.background=TARDE?'#7F77DD':'';renderAll();save();}
 function toggleFoco(){FOCO=!FOCO;efIdx=0;var bf=document.getElementById('btnFoco');bf.classList.toggle('on',FOCO);bf.style.background=FOCO?'#1D9E75':'';if(FOCO&&curTab!==0)setTab(0);else renderHoy();}
@@ -561,20 +524,59 @@ return {
   get editTid(){return editTid},set editTid(v){editTid=v},
   get editHoraTid(){return editHoraTid},set editHoraTid(v){editHoraTid=v},
 
-  // SUBIR — fuerza escribir estado local a Supabase
   subirNow:async function(){
     if(_uploading)return;
     _uploading=true;
     var btn=document.getElementById('btnSubir');
     if(btn){btn.textContent='Subiendo...';btn.style.opacity='.6';}
     setStatus('Subiendo...');
-    var ok=await pushToSupabase();
+    try{
+      state.tarde=TARDE;state.date=TODAY;
+      var ts=new Date().toISOString();
+      state.updated_at=ts;
+      var sn=snap(state);hist[TODAY]=sn;
+      try{localStorage.setItem('da24s',JSON.stringify(state));localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
+      var c=sn.c||{};
+      var r1=await fetch(SURL+'/rest/v1/estado',{
+        method:'POST',
+        headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),
+        body:JSON.stringify({fecha:TODAY,tarde:TARDE,day_started:!!state.started,
+          day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts})
+      });
+      if(!r1.ok){
+        var e1=await r1.text();
+        setStatus('Error estado: '+r1.status,4000);
+        console.error('estado error',r1.status,e1);
+        _uploading=false;
+        if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}
+        return;
+      }
+      var r2=await fetch(SURL+'/rest/v1/historial',{
+        method:'POST',
+        headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),
+        body:JSON.stringify({fecha:TODAY,done:sn.d,total:sn.t,pct:sn.p,
+          c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,
+          c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,
+          c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,
+          c_sueno:c.sueno?c.sueno.p:0,updated_at:ts})
+      });
+      if(!r2.ok){
+        var e2=await r2.text();
+        setStatus('Error historial: '+r2.status,4000);
+        console.error('historial error',r2.status,e2);
+        _uploading=false;
+        if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}
+        return;
+      }
+      setStatus('subido',2000);
+    }catch(ex){
+      setStatus('Red: '+ex.message,4000);
+      console.error('fetch exception',ex);
+    }
     _uploading=false;
     if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}
-    setStatus(ok?'subido':'error al subir',2000);
   },
 
-  // SYNC — fuerza leer desde Supabase y actualizar UI
   syncNow:async function(){
     var btn=document.getElementById('btnSync');
     if(btn){btn.textContent='Bajando...';btn.style.opacity='.6';}
@@ -589,7 +591,6 @@ return {
     var f=document.getElementById('elFecha');
     if(f)f.textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
     loadAll();
-    // Auto-sync cada 60s solo cuando la app es visible
     setInterval(function(){
       if(document.visibilityState==='visible'&&!_uploading){
         pullFromSupabase().then(function(ok){if(ok){renderAll();updBtns();}});
@@ -602,11 +603,8 @@ return {
 
 DA.init();
 
-// Al volver a la app (cambiar tab, desbloquear cel) — baja cambios automaticamente
 document.addEventListener('visibilitychange',function(){
-  if(document.visibilityState==='visible'){
-    DA.syncNow();
-  }
+  if(document.visibilityState==='visible'){DA.syncNow();}
 });
 </script>
 </body>
