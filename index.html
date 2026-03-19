@@ -228,6 +228,28 @@ function setStatus(m,ms){var el=document.getElementById('elStatus');if(el)el.tex
 function getBl(bid){return state.bloques.find(function(b){return b.id===bid})}
 function getTk(bid,tid){return getBl(bid).tareas.find(function(t){return t.id===tid})}
 
+// upsert: intenta PATCH primero, si no existe hace POST
+async function upsertEstado(data){
+  var r=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY,{
+    method:'PATCH',headers:SH,body:JSON.stringify(data)
+  });
+  if(r.ok){var txt=await r.text();if(txt==='[]'||txt==='0'||txt.trim()===''){
+    // no habia fila, insertar
+    r=await fetch(SURL+'/rest/v1/estado',{method:'POST',headers:SH,body:JSON.stringify(Object.assign({fecha:TODAY},data))});
+  }}
+  return r;
+}
+
+async function upsertHistorial(data){
+  var r=await fetch(SURL+'/rest/v1/historial?fecha=eq.'+TODAY,{
+    method:'PATCH',headers:SH,body:JSON.stringify(data)
+  });
+  if(r.ok){var txt=await r.text();if(txt==='[]'||txt==='0'||txt.trim()===''){
+    r=await fetch(SURL+'/rest/v1/historial',{method:'POST',headers:SH,body:JSON.stringify(Object.assign({fecha:TODAY},data))});
+  }}
+  return r;
+}
+
 async function pullFromSupabase(){
   try{
     var re=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY+'&limit=1',{headers:SH});
@@ -268,8 +290,8 @@ async function save(){
   try{localStorage.setItem('da24s',JSON.stringify(state));localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
   try{
     var c=sn.c||{};
-    await fetch(SURL+'/rest/v1/estado',{method:'POST',headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({fecha:TODAY,tarde:TARDE,day_started:!!state.started,day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts})});
-    await fetch(SURL+'/rest/v1/historial',{method:'POST',headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),body:JSON.stringify({fecha:TODAY,done:sn.d,total:sn.t,pct:sn.p,c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,c_sueno:c.sueno?c.sueno.p:0,updated_at:ts})});
+    await upsertEstado({tarde:TARDE,day_started:!!state.started,day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts});
+    await upsertHistorial({done:sn.d,total:sn.t,pct:sn.p,c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,c_sueno:c.sueno?c.sueno.p:0,updated_at:ts});
   }catch(e){}
 }
 
@@ -537,41 +559,24 @@ return {
       var sn=snap(state);hist[TODAY]=sn;
       try{localStorage.setItem('da24s',JSON.stringify(state));localStorage.setItem('da24h',JSON.stringify(hist));}catch(e){}
       var c=sn.c||{};
-      var r1=await fetch(SURL+'/rest/v1/estado',{
-        method:'POST',
-        headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),
-        body:JSON.stringify({fecha:TODAY,tarde:TARDE,day_started:!!state.started,
-          day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts})
-      });
+      var r1=await upsertEstado({tarde:TARDE,day_started:!!state.started,day_slept:!!state.slept,bloques:JSON.stringify(state.bloques),updated_at:ts});
       if(!r1.ok){
         var e1=await r1.text();
         setStatus('Error estado: '+r1.status,4000);
-        console.error('estado error',r1.status,e1);
-        _uploading=false;
-        if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}
-        return;
+        console.error('estado',r1.status,e1);
+        _uploading=false;if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}return;
       }
-      var r2=await fetch(SURL+'/rest/v1/historial',{
-        method:'POST',
-        headers:Object.assign({},SH,{'Prefer':'resolution=merge-duplicates'}),
-        body:JSON.stringify({fecha:TODAY,done:sn.d,total:sn.t,pct:sn.p,
-          c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,
-          c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,
-          c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,
-          c_sueno:c.sueno?c.sueno.p:0,updated_at:ts})
-      });
+      var r2=await upsertHistorial({done:sn.d,total:sn.t,pct:sn.p,c_workout:c.workout?c.workout.p:0,c_dieta:c.dieta?c.dieta.p:0,c_proyecto:c.proyecto?c.proyecto.p:0,c_estudio:c.estudio?c.estudio.p:0,c_salud_m:c.salud_m?c.salud_m.p:0,c_rutina:c.rutina?c.rutina.p:0,c_sueno:c.sueno?c.sueno.p:0,updated_at:ts});
       if(!r2.ok){
         var e2=await r2.text();
         setStatus('Error historial: '+r2.status,4000);
-        console.error('historial error',r2.status,e2);
-        _uploading=false;
-        if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}
-        return;
+        console.error('historial',r2.status,e2);
+        _uploading=false;if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}return;
       }
       setStatus('subido',2000);
     }catch(ex){
       setStatus('Red: '+ex.message,4000);
-      console.error('fetch exception',ex);
+      console.error('excepcion',ex);
     }
     _uploading=false;
     if(btn){btn.innerHTML='&#x2191; Subir';btn.style.opacity='';}
