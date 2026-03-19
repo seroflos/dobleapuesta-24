@@ -241,8 +241,9 @@ function getTk(bid,tid){return getBl(bid).tareas.find(function(t){return t.id===
 // lastSaveTime: timestamp of our most recent write to Supabase
 var lastSaveTime = 0;
 
-// SOLO LECTURA — nunca escribe, nunca guarda localmente durante sync
+// SOLO LECTURA — nunca escribe, nunca corre mientras hay un save en progreso
 async function syncFromSupabase(){
+  if(saving)return false; // never sync while saving
   try{
     var re=await fetch(SURL+'/rest/v1/estado?fecha=eq.'+TODAY+'&limit=1',{headers:SH});
     if(!re.ok)return false;
@@ -302,16 +303,6 @@ async function loadAll(){
   }
   updBtns();
   if(!state.started)setTimeout(abrirInicio,400);
-  // Auto-sync every 30 seconds
-  if(!window._syncInterval){
-    window._syncInterval=setInterval(function(){
-      if(document.visibilityState==='visible'&&!saving){
-        syncFromSupabase().then(function(ok){
-          if(ok){renderAll();updBtns();}
-        });
-      }
-    },30000);
-  }
 }
 
 async function save(){
