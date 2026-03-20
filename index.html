@@ -137,6 +137,7 @@ button{cursor:pointer;touch-action:manipulation}
       <button class="tbtn" id="btnFoco" style="--c:#1D9E75" onclick="DA.toggleFoco()">Enfoque</button>
       <button class="tbtn" id="btnSubir" onclick="DA.subirNow()" style="border-color:#639922;color:#639922">&#x2191; Subir</button>
       <button class="tbtn" id="btnSync" onclick="DA.syncNow()" style="border-color:#378ADD;color:#378ADD">&#x2193; Sync</button>
+      <button class="tbtn" id="btnUndo" onclick="DA.undoNow()" style="border-color:#E24B4A;color:#E24B4A;opacity:.3">&#x21A9; Undo</button>
       <button id="btnInicio" class="tbtn" style="display:none;border-color:#639922;color:#639922" onclick="DA.abrirInicio()">Empezar dia</button>
     </div>
   </div>
@@ -175,6 +176,8 @@ var nid=100;
 var chartInst=null,gcP=7,gcM='bloques';
 var dTid=null,dBid=null,dOBid=null,dOTid=null,ghost=null,ox=0,oy=0;
 var _uploading=false;
+var _undoStack=[];
+var _undoMax=10;
 
 var CATS=[
   {id:'workout',  name:'Workout',           color:'#639922',tids:['t3']},
@@ -290,7 +293,12 @@ async function pullFromSupabase(){
     return true;
   }catch(e){return false;}
 }
-
+function pushUndo(){
+  _undoStack.push(JSON.stringify(state));
+  if(_undoStack.length>_undoMax)_undoStack.shift();
+  var btn=document.getElementById('btnUndo');
+  if(btn)btn.style.opacity='1';
+}
 async function save(){
   state.tarde=TARDE;state.date=TODAY;
   var ts=new Date().toISOString();
@@ -325,7 +333,9 @@ function abrirInicio(){var el=document.getElementById('mFecha');if(el)el.textCon
 function cerrarInicio(){document.getElementById('mInicio').classList.remove('on');updBtns();}
 function startDay(){state.started=true;save();cerrarInicio();renderAll();}
 function abrirSueno(){
-  var t12=getTk('b4','t12'),t13=getTk('b4','t13');
+  var b4=getBl('b4');
+var t12=b4&&b4.tareas.find(function(t){return t.txt.indexOf('Preparacion para dormir')>=0});
+var t13=b4&&b4.tareas.find(function(t){return t.txt.indexOf('Dormir')>=0&&t.txt.indexOf('8.5')>=0});
   if(!t12.done||!t13.done){
     setStatus('Primero marca: Preparacion y Dormir 8.5h',3000);
     return;
@@ -348,8 +358,9 @@ function updBtns(){
   var bi=document.getElementById('btnInicio'),bs=document.getElementById('btnSueno');
   if(bi)bi.style.display=(!s||sl)?'inline-block':'none';
   if(bs){
-    var t12=state&&getBl('b4')&&getTk('b4','t12');
-    var t13=state&&getBl('b4')&&getTk('b4','t13');
+    var b4=state&&getBl('b4');
+    var t12=b4&&b4.tareas.find(function(t){return t.txt.indexOf('Preparacion para dormir')>=0});
+    var t13=b4&&b4.tareas.find(function(t){return t.txt.indexOf('Dormir')>=0&&t.txt.indexOf('8.5')>=0});
     var suenolisto=t12&&t13&&t12.done&&t13.done;
     bs.style.display=(!sl&&suenolisto)?'inline-block':'none';
   }
@@ -358,17 +369,25 @@ function setTab(n){curTab=n;for(var i=0;i<4;i++){var t=document.getElementById('
 function toggleTarde(){TARDE=!TARDE;state.tarde=TARDE;var bt=document.getElementById('btnTarde');bt.classList.toggle('on',TARDE);bt.style.background=TARDE?'#7F77DD':'';renderAll();save();}
 function toggleFoco(){FOCO=!FOCO;efIdx=0;var bf=document.getElementById('btnFoco');bf.classList.toggle('on',FOCO);bf.style.background=FOCO?'#1D9E75':'';if(FOCO&&curTab!==0)setTab(0);else renderHoy();}
 function toggleBlq(bid){openB[bid]=!openB[bid];renderHoy();setTimeout(setupDrag,0);}
-function toggleTask(bid,tid){getTk(bid,tid).done^=1;renderHoy();save();}
-function toggleSub(bid,tid,sid){getTk(bid,tid).sub.find(function(s){return s.id===sid}).done^=1;renderHoy();save();}
+function startEditHora(bid,tid){
+  editTid=null;
+  editHoraTid=tid;
+  renderHoy();
+  setTimeout(function(){
+    var i=document.getElementById('hi'+tid);
+    if(i){i.focus();i.select();}
+  },20);
+}
+function toggleTask(bid,tid){pushUndo();getTk(bid,tid).done^=1;renderHoy();save();}
+function toggleSub(bid,tid,sid){pushUndo();getTk(bid,tid).sub.find(function(s){return s.id===sid}).done^=1;renderHoy();save();}
 function toggleExp(bid,tid){var tk=getTk(bid,tid);tk.exp=!tk.exp;renderHoy();setTimeout(setupDrag,0);}
-function delTask(bid,tid){var bl=getBl(bid);bl.tareas=bl.tareas.filter(function(t){return t.id!==tid});renderHoy();save();}
-function delSub(bid,tid,sid){var tk=getTk(bid,tid);tk.sub=tk.sub.filter(function(s){return s.id!==sid});renderHoy();save();}
-function addTask(bid){var inp=document.getElementById('ai'+bid);if(!inp||!inp.value.trim())return;getBl(bid).tareas.push({id:'u'+(nid++),txt:inp.value.trim(),done:false,exp:false,sub:[],hora:''});inp.value='';renderHoy();save();setTimeout(setupDrag,0);}
-function addSub(bid,tid){var inp=document.getElementById('si'+tid);if(!inp||!inp.value.trim())return;getTk(bid,tid).sub.push({id:'s'+(nid++),txt:inp.value.trim(),done:false});inp.value='';renderHoy();save();}
-function startEditHora(bid,tid){editHoraTid=tid;editTid=null;renderHoy();setTimeout(function(){var i=document.getElementById('hi'+tid);if(i){i.focus();i.select();}},20);}
-function commitHora(bid,tid){var inp=document.getElementById('hi'+tid);if(inp)getTk(bid,tid).hora=inp.value.trim();editHoraTid=null;renderHoy();save();}
+function delTask(bid,tid){pushUndo();var bl=getBl(bid);bl.tareas=bl.tareas.filter(function(t){return t.id!==tid});renderHoy();save();}
+function delSub(bid,tid,sid){pushUndo();var tk=getTk(bid,tid);tk.sub=tk.sub.filter(function(s){return s.id!==sid});renderHoy();save();}
+function addTask(bid){pushUndo();var inp=document.getElementById('ai'+bid);if(!inp||!inp.value.trim())return;getBl(bid).tareas.push({id:'u'+(nid++),txt:inp.value.trim(),done:false,exp:false,sub:[],hora:''});inp.value='';renderHoy();save();setTimeout(setupDrag,0);}
+function addSub(bid,tid){pushUndo();var inp=document.getElementById('si'+tid);if(!inp||!inp.value.trim())return;getTk(bid,tid).sub.push({id:'s'+(nid++),txt:inp.value.trim(),done:false});inp.value='';renderHoy();save();}
+function commitHora(bid,tid){pushUndo();var inp=document.getElementById('hi'+tid);var val=inp?inp.value.trim():'';var tk=getTk(bid,tid);if(tk)tk.hora=val;editHoraTid=null;renderHoy();save();}
+function commitEdit(bid,tid){pushUndo();var inp=document.getElementById('ei'+tid);if(inp){var v=inp.value.trim();if(v)getTk(bid,tid).txt=v;}editTid=null;renderHoy();save();}
 function startEdit(bid,tid){editTid=tid;editHoraTid=null;renderHoy();setTimeout(function(){var i=document.getElementById('ei'+tid);if(i){i.focus();i.select();}},20);}
-function commitEdit(bid,tid){var inp=document.getElementById('ei'+tid);if(inp){var v=inp.value.trim();if(v)getTk(bid,tid).txt=v;}editTid=null;renderHoy();save();}
 function getPend(){var l=[];getOrden().forEach(function(bl){bl.tareas.forEach(function(tk){if(!tk.done)l.push({bl:bl,tk:tk})})});return l}
 function efHecho(){var p=getPend();if(!p.length){FOCO=false;renderHoy();return;}if(efIdx>=p.length)efIdx=0;p[efIdx].tk.done=true;renderHoy();save();}
 function efSig(){var p=getPend();if(!p.length)return;efIdx=(efIdx+1)%p.length;renderHoy();}
@@ -611,7 +630,6 @@ confirmarSueno:function(){state.slept=true;save();DA.cerrarSueno();},
     if(ok){renderAll();updBtns();setStatus('sincronizado',2000);}
     else{setStatus('sin conexion',2000);}
   },
-
   init:function(){
     var f=document.getElementById('elFecha');
     if(f)f.textContent=new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -621,7 +639,19 @@ confirmarSueno:function(){state.slept=true;save();DA.cerrarSueno();},
         pullFromSupabase().then(function(ok){if(ok){renderAll();updBtns();}});
       }
     },60000);
+  },
+  undoNow:function(){
+    if(!_undoStack.length)return;
+    state=JSON.parse(_undoStack.pop());
+    TARDE=!!state.tarde;
+    var bt=document.getElementById('btnTarde');
+    if(bt){bt.classList.toggle('on',TARDE);bt.style.background=TARDE?'#7F77DD':'';}
+    var btn=document.getElementById('btnUndo');
+    if(btn)btn.style.opacity=_undoStack.length?'1':'.3';
+    try{localStorage.setItem('da24s',JSON.stringify(state));}catch(e){}
+    renderAll();updBtns();save();
   }
+
 };
 
 })();
