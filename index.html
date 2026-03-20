@@ -362,7 +362,7 @@ function updBtns(){
     var t12=b4&&b4.tareas.find(function(t){return t.txt.indexOf('Preparacion para dormir')>=0});
     var t13=b4&&b4.tareas.find(function(t){return t.txt.indexOf('Dormir')>=0&&t.txt.indexOf('8.5')>=0});
     var suenolisto=t12&&t13&&t12.done&&t13.done;
-    bs.style.display=(!sl&&suenolisto)?'inline-block':'none';
+    bs.style.display=(!sl&&suenolisto)?'block':'none';
   }
 }
 function setTab(n){curTab=n;for(var i=0;i<4;i++){var t=document.getElementById('tab'+i),v=document.getElementById('v'+i);if(t)t.className='tab'+(n===i?' on':'');if(v)v.style.display=n===i?'block':'none';}if(n===0)renderHoy();else if(n===1)renderHorario();else if(n===2)renderHistorial();else if(n===3)renderChart();}
